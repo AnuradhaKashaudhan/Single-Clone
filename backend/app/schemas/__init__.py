@@ -22,6 +22,7 @@ from app.schemas.conversation import (
     AddParticipantRequest,
     RemoveParticipantRequest,
     ConversationParticipantResponse,
+    UpdateDisappearingTimerRequest,
 )
 from app.schemas.message import (
     MessageBase,
@@ -32,6 +33,10 @@ from app.schemas.message import (
     MessageEvent,
     ReadReceiptUpdate,
     MessageReceiptResponse,
+    AttachmentResponse,
+    ReactionResponse,
+    ReactionCreate,
+    ReplyPreview,
 )
 from app.schemas.contact import (
     ContactResponse,

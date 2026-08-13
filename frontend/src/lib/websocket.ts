@@ -8,8 +8,13 @@ export interface WebSocketMessage {
     | 'typing'
     | 'read_receipt'
     | 'user_status'
-    | 'delivery_receipt';
-  data: any;
+    | 'delivery_receipt'
+    | 'reaction_added'
+    | 'reaction_removed'
+    | 'settings_updated'
+    | 'attachment_added'
+    | string;  // allow future events
+  [key: string]: unknown;  // index signature so it's usable as Record<string,unknown>
 }
 
 type MessageHandler = (message: WebSocketMessage) => void;

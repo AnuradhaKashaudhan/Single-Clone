@@ -1,212 +1,221 @@
-# Signal Messenger Clone - Full Stack Web App
+# Secure Messaging Platform — Signal Clone
 
-A functional, visually accurate clone of Signal Messenger built as a full-stack web application. This project replicates Signal's UI/UX and core real-time messaging workflows.
+## Overview
 
-## 🏗️ Project Structure
+This is a full-stack, real-time secure messaging platform inspired by Signal. It features a polished, responsive user interface, real-time messaging capabilities via WebSockets, group chats, delivery/read receipts, typing indicators, and a robust backend utilizing FastAPI and SQLite.
 
-```
-signal-clone/
-├── frontend/          # Next.js (React + TypeScript) client
-│   ├── src/
-│   │   ├── app/      # App Router
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   └── lib/
-│   ├── public/
-│   ├── package.json
-│   └── .env.local    # Environment variables
-│
-└── backend/           # FastAPI (Python) server
-    ├── app/
-    │   ├── models/   # SQLAlchemy ORM models
-    │   ├── schemas/  # Pydantic request/response schemas
-    │   ├── routers/  # API route handlers
-    │   ├── services/ # Business logic
-    │   └── database/ # Database configuration
-    ├── main.py       # FastAPI entry point
-    ├── requirements.txt
-    └── .env          # Environment variables
-```
+## Features
 
-## 🚀 Tech Stack
+- **Real-Time Direct Messaging**: Seamless, zero-latency direct messaging using WebSockets.
+- **Group Chats**: Create groups, add/remove members (admin only), and broadcast messages to all members instantly.
+- **Delivery & Read Receipts**: Real-time status indicators (Sent ✓, Delivered ✓✓, Read ✓✓) dynamically updating via WebSockets.
+- **Typing Indicators**: Live "User is typing..." presence broadcasted instantly.
+- **Online Presence**: View who is currently online with live status updates.
+- **JWT Authentication**: Secure user registration and login with encrypted passwords.
+- **Search & Contacts**: Discover users on the platform and initiate direct conversations organically.
+- **Dark Mode**: Beautiful, responsive, toggle-able dark and light themes spanning all UI components.
+- **SQLite Persistence**: No mocked data. All users, conversations, messages, and receipts are safely persisted in SQLite.
 
-- **Frontend:** Next.js 15+, TypeScript, Tailwind CSS, React Hooks
-- **Backend:** FastAPI, Python 3.9+, SQLAlchemy ORM
-- **Database:** SQLite (async via aiosqlite)
-- **Real-time:** WebSockets
-- **Auth:** JWT (mocked for development)
+## Tech Stack
 
-## 📋 Prerequisites
+**Frontend**:
+- Framework: [Next.js](https://nextjs.org/) (React)
+- Language: [TypeScript](https://www.typescriptlang.org/)
+- Styling: [Tailwind CSS](https://tailwindcss.com/)
+- Icons: [Lucide React](https://lucide.dev/)
 
-- Node.js 18+ (for frontend)
-- Python 3.9+ (for backend)
-- npm or yarn
+**Backend**:
+- Framework: [FastAPI](https://fastapi.tiangolo.com/)
+- Language: Python 3
+- ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
+- Authentication: JWT, Passlib, bcrypt
 
-## ⚙️ Setup Instructions
+**Database**:
+- [SQLite](https://www.sqlite.org/index.html) (Local Relational Database)
 
-### Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/Scripts/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run server
-python main.py
-```
-
-Server runs at: `http://localhost:8000`
-
-### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run dev server
-npm run dev
-```
-
-Client runs at: `http://localhost:3000`
-
-## 📊 Database Schema
-
-The app uses a normalized SQLite schema:
-
-- **users**: User profiles with auth data
-- **conversations**: Direct and group chats
-- **conversation_participants**: Join table for conversation membership
-- **messages**: All chat messages with delivery status
-- **message_receipts**: Read/delivered status per recipient
-
-See [Backend Database Models](./backend/app/models/models.py) for full schema details.
-
-## 🔌 API Endpoints
-
-### Authentication
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - Login with credentials
-- `POST /auth/logout` - Logout
-- `GET /auth/me` - Get current user
-
-### Conversations
-- `GET /conversations` - List user's conversations
-- `GET /conversations/{id}` - Get conversation details
-- `POST /conversations` - Create new conversation
-- `DELETE /conversations/{id}` - Delete conversation
-
-### Messages
-- `GET /conversations/{id}/messages` - Get chat history
-- `POST /conversations/{id}/messages` - Send message
-- `PUT /messages/{id}` - Update message status
-
-### WebSocket
-- `WS /ws/{conversation_id}` - Real-time messaging
-
-## 🎯 Core Features (MVP)
-
-1. **Authentication**: Mocked phone/username registration, OTP verification, JWT sessions
-2. **Contacts**: Contact list, search, add new contacts
-3. **One-on-One Messaging**: Real-time chat, delivery/read receipts, typing indicators
-4. **Group Messaging**: Create groups, manage members, admin controls
-5. **UI/UX**: Signal-inspired design (dark theme, rounded bubbles, checkmarks)
-
-## 🎨 Design References
-
-- Signal Desktop/Web interface
-- Dark navy/blue accent palette
-- Minimalist, privacy-focused aesthetic
-- Single/double checkmark read receipts
-
-## 🔐 Security Notes
-
-- ⚠️ **No real encryption** - This is a demo app. Encryption is mocked only.
-- ⚠️ Use `--sqlite--` in development only
-- ⚠️ Change `SECRET_KEY` before production deployment
-
-## 📦 Seed Data
-
-The database comes seeded with:
-- 5 mock users with avatars
-- Mix of direct and group conversations
-- Realistic message history with varied timestamps
-
-Run `python seed_db.py` after first startup to populate sample data.
-
-## 🚢 Deployment
-
-### Frontend (Vercel)
-```bash
-cd frontend
-npm run build
-# Deploy to Vercel via CLI or GitHub
-```
-
-### Backend (Render/Railway)
-```bash
-cd backend
-# Set DATABASE_URL and SECRET_KEY in platform environment
-# Deploy Python app with `main.py` as entry point
-```
-
-## 📝 Development Workflow
-
-1. **Phase 1**: ✅ Project scaffolding complete
-2. **Phase 2**: Database schema & models
-3. **Phase 3**: Authentication flow
-4. **Phase 4**: Conversation list & contacts UI
-5. **Phase 5**: 1-on-1 real-time messaging
-6. **Phase 6**: Group messaging
-7. **Phase 7**: UI polish & Signal branding
-8. **Phase 8**: Placeholder screens (calls, stories, etc.)
-9. **Phase 9**: Database seeding
-10. **Phase 10**: README & deployment prep
-
-## 🛠️ Available Scripts
-
-### Frontend
-```bash
-npm run dev      # Start dev server
-npm run build    # Build for production
-npm run lint     # Run ESLint
-npm run type-check  # TypeScript checks
-```
-
-### Backend
-```bash
-python main.py              # Run server
-python -m pytest            # Run tests
-alembic revision --autogenerate  # Create migration
-alembic upgrade head        # Apply migrations
-```
-
-## 📚 Project Structure Philosophy
-
-- **Separation of Concerns**: Models, schemas, routers, services keep code modular
-- **Type Safety**: TypeScript (frontend), type hints (backend)
-- **Async/Await**: All I/O operations are non-blocking
-- **DRY Principle**: Reusable components, schemas, utilities
-- **Testability**: Router → Service → Model layers are independently testable
-
-## 🤝 Contributing
-
-This is an SDE assignment project. Focus areas:
-- Core features before bonus features
-- Code readability and maintainability
-- Proper error handling and validation
-- Clear architectural decisions
-
-## 📄 License
-
-MIT
+**Real-time**:
+- Native [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) (FastAPI endpoints + React standard WebSocket client)
 
 ---
 
-**Next Step**: Move to Phase 2 - Design and implement the database schema with ER diagram.
+## Architecture
+
+The system utilizes a modern decoupled architecture:
+1. **Frontend (Next.js)** acts as the presentation layer, handling UI rendering, state management, and real-time DOM updates.
+2. **Backend (FastAPI)** serves as the RESTful API provider and the WebSocket hub.
+3. **Database (SQLite)** handles persistent storage of all entities.
+4. **WebSocket Flow**: When a user sends a message, it is first sent via a REST `POST` to the backend. The backend persists the message to SQLite and then immediately **broadcasts** the persisted message payload over the active WebSocket connections of all participating members. This avoids expensive polling and provides instant chat updates.
+
+## Project Structure
+
+```text
+├── backend/                  # FastAPI Application
+│   ├── app/
+│   │   ├── database/         # SQLite connection config
+│   │   ├── models/           # SQLAlchemy ORM models
+│   │   ├── routers/          # FastAPI route controllers
+│   │   ├── schemas/          # Pydantic validation schemas
+│   │   └── services/         # Business logic
+│   ├── run_server.py         # Entrypoint
+│   └── requirements.txt      # Python dependencies
+│
+├── frontend/                 # Next.js Application
+│   ├── src/
+│   │   ├── app/              # Next.js App Router pages
+│   │   ├── components/       # Reusable React components
+│   │   └── lib/              # API clients & WebSocket managers
+│   ├── tailwind.config.ts    # Tailwind styles
+│   └── package.json          # Node dependencies
+└── README.md
+```
+
+---
+
+## Database Schema
+
+The SQLite schema consists of the following tightly relational models:
+
+- **Users**: Stores credentials, `display_name`, `avatar_url`, and `last_seen` timestamps.
+- **Conversations**: Stores chat metadata (type: `DIRECT` or `GROUP`, and `name`).
+- **ConversationMembers** (`conversation_participants`): A many-to-many association table linking Users to Conversations. Includes a `role` field to distinguish group `admins` from standard `members`.
+- **Messages**: Stores message `content`, a foreign key to the `conversation`, and the `sender_id`.
+- **MessageReceipts**: A tracking table referencing a `message_id` and `user_id` to persist `DELIVERED` and `READ` statuses independently for every participant in a chat.
+
+---
+
+## API Documentation
+
+The backend exposes the following structured RESTful APIs:
+
+### AUTH
+- `POST /auth/register`: Register a new user.
+- `POST /auth/login`: Authenticate and receive a JWT.
+- `GET /auth/me`: Fetch current authenticated user details.
+- `POST /auth/logout`: Invalidate session.
+
+### USERS / CONTACTS
+- `GET /users/search?q={query}`: Search for users by display name or username.
+- `PUT /users/me`: Update the current user's profile/settings.
+
+### CONVERSATIONS
+- `GET /conversations`: List all conversations the user is a member of.
+- `GET /conversations/{id}`: Fetch details for a specific conversation.
+- `POST /conversations`: Create a new direct or group conversation.
+
+### MESSAGES
+- `GET /conversations/{id}/messages`: Fetch chronological message history.
+- `POST /conversations/{id}/messages`: Send a new message to a conversation.
+- `POST /conversations/{id}/messages/mark-as-read`: Bulk update receipt status to READ.
+
+### GROUPS
+- `POST /conversations/{id}/members`: (Admin) Add a user to a group.
+- `DELETE /conversations/{id}/members/{user_id}`: (Admin) Remove a user from a group.
+
+---
+
+## WebSocket Architecture
+
+**Endpoint**: `ws://localhost:8000/ws/socket`
+
+WebSockets are utilized to avoid the immense overhead of HTTP polling. Rather than pinging the server every second for new messages, the client opens a persistent TCP connection. The server pushes events down to the client immediately as they happen.
+
+**Events Broadcasted**:
+- **Connection**: Authenticates via JWT token on connection.
+- **New Message** (`type: "message"`): Contains full message payload.
+- **Typing** (`type: "typing"`): Emitted when a user starts typing (debounced).
+- **Delivery / Read Receipts** (`type: "delivery_receipt"`, `"read_receipt"`): Informs the sender that UI checkmarks should be updated.
+- **Presence** (`type: "user_status"`): Updates UI to display "Online" or "Offline" dynamically.
+
+---
+
+## Authentication
+
+Authentication utilizes secure **JWT (JSON Web Tokens)**. 
+- Passwords are encrypted with `bcrypt` before storage.
+- The `/auth/login` endpoint returns an `access_token`.
+- The frontend securely stores this token and attaches it to the `Authorization: Bearer <token>` header of all subsequent API requests and the initial WebSocket handshake.
+- *(Note: OTP flow is mocked for development purposes as per standard assignment parameters).*
+
+---
+
+## Environment Variables
+
+The project utilizes environment variables to keep configurations modular. 
+*(No secrets are committed to version control; `.env` files are in `.gitignore`)*
+
+**Frontend (`frontend/.env.local`)**:
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_WS_URL=ws://localhost:8000
+```
+
+**Backend (`backend/.env`)**:
+```
+SECRET_KEY=your_secure_jwt_secret_here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+```
+
+---
+
+## Local Setup
+
+### 1. Backend Setup
+Navigate to the backend directory, set up your virtual environment, and install dependencies:
+```bash
+cd backend
+python -m venv venv
+source venv/Scripts/activate  # On Windows
+pip install -r requirements.txt
+```
+
+**Running the Backend**:
+```bash
+python run_server.py
+```
+*(The backend will start at `http://localhost:8000`)*
+
+### 2. Frontend Setup
+Open a new terminal, navigate to the frontend directory, and install dependencies:
+```bash
+cd frontend
+npm install
+```
+
+**Running the Frontend**:
+```bash
+npm run dev
+```
+*(The frontend will start at `http://localhost:3000`)*
+
+---
+
+## Seed Accounts
+
+To help reviewers and evaluators quickly test the platform, several accounts are pre-seeded in the database:
+- **Alice Smith**: `alice` / `password123`
+- **Bob Jones**: `bob` / `password123`
+- **Charlie Brown**: `charlie` / `password123`
+
+---
+
+## Deployment
+
+**Frontend**: Designed to be instantly deployable to [Vercel](https://vercel.com). Simply link the repository, configure the `NEXT_PUBLIC_API_URL`, and deploy.
+**Backend**: Deployable to [Render](https://render.com), [Railway](https://railway.app), or AWS EC2. Ensure CORS is correctly configured to accept the production frontend domain, and upgrade the WebSocket URL to use secure `wss://`.
+
+---
+
+## Assumptions & Limitations
+
+- **Encryption**: End-to-End Encryption (E2EE) is simulated/placeholder in the UI. Implementing true E2EE requires complex client-side key generation and exchange (e.g., Signal Protocol) which is outside the scope of this phase.
+- **Media**: Voice calls, video calls, and file attachments are strictly frontend UI placeholders marked as "Coming Soon".
+- **Notifications**: Push notifications are UI placeholders; current notifications are strictly in-app via WebSockets.
+- **Database**: SQLite is utilized as requested by the assignment parameters. For massive production scaling, migration to PostgreSQL is recommended.
+
+## Future Improvements
+
+- File/Image uploads utilizing AWS S3 or similar blob storage.
+- Real browser Push Notifications (Service Workers).
+- Integration of the actual Signal Protocol for E2EE.
+- Voice & Video calling using WebRTC.

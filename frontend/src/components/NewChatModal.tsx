@@ -48,7 +48,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
       setLoading(true);
       try {
         const results = await apiClient.searchUsers(query);
-        setUsers(results);
+        setUsers(results as User[]);
       } catch (error) {
         console.error('Failed to search users:', error);
       } finally {
@@ -81,7 +81,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
           type: 'direct',
           participant_ids: [user.id],
         });
-        onChatCreated(newConv);
+        onChatCreated(newConv as Conversation);
       } catch (error) {
         console.error('Failed to create conversation:', error);
         toast.error('Failed to start chat.');
@@ -108,7 +108,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
         name: groupName.trim(),
         participant_ids: selectedUsers.map(u => u.id),
       });
-      onChatCreated(newConv);
+      onChatCreated(newConv as Conversation);
       toast.success(`Group "${groupName}" created!`);
     } catch (error) {
       console.error('Failed to create group:', error);
@@ -136,13 +136,13 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
         {/* Tabs */}
         <div className="flex border-b">
           <button
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${chatType === 'direct' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${chatType === 'direct' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => { setChatType('direct'); setSelectedUsers([]); }}
           >
             <UserIcon className="w-4 h-4" /> Direct Message
           </button>
           <button
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${chatType === 'group' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 ${chatType === 'group' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setChatType('group')}
           >
             <Users className="w-4 h-4" /> New Group
@@ -154,7 +154,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <input
               type="text"
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Group Name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
@@ -162,9 +162,9 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
             {selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {selectedUsers.map(u => (
-                  <div key={u.id} className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                  <div key={u.id} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
                     {u.display_name}
-                    <button onClick={() => handleUserSelect(u)} className="hover:text-indigo-900"><X className="w-3 h-3" /></button>
+                    <button onClick={() => handleUserSelect(u)} className="hover:text-blue-900"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Search users..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -193,7 +193,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
         <div className="flex-1 overflow-y-auto bg-gray-50">
           {loading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
           ) : users.length > 0 ? (
             <ul className="divide-y divide-gray-100 bg-white">
@@ -203,17 +203,17 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
                   <li 
                     key={user.id} 
                     onClick={() => handleUserSelect(user)}
-                    className={`flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50' : ''}`}
+                    className={`flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
                   >
                     {chatType === 'group' && (
-                      <div className={`w-5 h-5 rounded border mr-4 flex items-center justify-center ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                      <div className={`w-5 h-5 rounded border mr-4 flex items-center justify-center ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
                         {isSelected && <Check className="w-3 h-3 text-white" />}
                       </div>
                     )}
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover mr-3" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold mr-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-white font-bold mr-3">
                         {user.display_name.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -243,7 +243,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
             <button
               onClick={handleCreateGroup}
               disabled={selectedUsers.length === 0 || !groupName.trim() || creating}
-              className="w-full bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+              className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
             >
               {creating ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Group'}
             </button>
@@ -253,7 +253,7 @@ export default function NewChatModal({ isOpen, onClose, onChatCreated, existingC
         {/* Overlay for Direct Chat creation loading */}
         {creating && chatType === 'direct' && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </div>
         )}
       </div>

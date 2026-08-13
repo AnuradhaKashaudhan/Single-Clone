@@ -37,6 +37,7 @@ class ConversationResponse(ConversationBase):
     last_message_preview: Optional[str] = None
     last_message_timestamp: Optional[datetime] = None
     unread_count: int = 0
+    disappearing_messages_seconds: Optional[int] = None
 
     class Config:
         orm_mode = True
@@ -49,6 +50,7 @@ class ConversationListItem(BaseModel):
     last_message_preview: Optional[str]
     last_message_timestamp: Optional[datetime]
     unread_count: int
+    disappearing_messages_seconds: Optional[int]
     participants: List[ConversationParticipantResponse]
 
     class Config:
@@ -62,3 +64,7 @@ class AddParticipantRequest(BaseModel):
 
 class RemoveParticipantRequest(BaseModel):
     user_id: int
+
+
+class UpdateDisappearingTimerRequest(BaseModel):
+    disappearing_messages_seconds: Optional[int] = None

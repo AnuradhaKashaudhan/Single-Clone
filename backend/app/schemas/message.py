@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
-from app.models.models import MessageStatus, ReceiptStatus
+from app.models.models import MessageStatus, ReceiptStatus, MessageType
 
 
 class MessageReceiptResponse(BaseModel):
@@ -14,12 +14,50 @@ class MessageReceiptResponse(BaseModel):
         orm_mode = True
 
 
-class MessageBase(BaseModel):
+class AttachmentResponse(BaseModel):
+    id: int
+    file_name: str
+    file_path: str
+    mime_type: str
+    file_size: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class ReactionResponse(BaseModel):
+    id: int
+    emoji: str
+    user_id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class ReactionCreate(BaseModel):
+    emoji: str
+
+
+# Lightweight preview for the quoted/reply message
+class ReplyPreview(BaseModel):
+    id: int
     content: str
+    sender_display_name: Optional[str] = None
+    message_type: MessageType = MessageType.TEXT
+
+    class Config:
+        orm_mode = True
+
+
+class MessageBase(BaseModel):
+    content: str = ""
 
 
 class MessageCreate(MessageBase):
-    pass
+    reply_to_id: Optional[int] = None
+    message_type: MessageType = MessageType.TEXT
 
 
 class MessageResponse(MessageBase):
@@ -29,10 +67,16 @@ class MessageResponse(MessageBase):
     sender_username: Optional[str] = None
     sender_display_name: Optional[str] = None
     sender_avatar_url: Optional[str] = None
+    message_type: MessageType = MessageType.TEXT
+    reply_to_id: Optional[int] = None
+    reply_to: Optional[ReplyPreview] = None
     status: MessageStatus
     created_at: datetime
     updated_at: datetime
+    expires_at: Optional[datetime] = None
     receipts: List[MessageReceiptResponse] = []
+    attachments: List[AttachmentResponse] = []
+    reactions: List[ReactionResponse] = []
 
     class Config:
         orm_mode = True
@@ -51,8 +95,8 @@ class TypingIndicator(BaseModel):
 
 class MessageEvent(BaseModel):
     """WebSocket event for new message"""
-    type: str = "new_message"  # new_message, message_status_change, typing, user_online, user_offline
-    data: dict  # Content varies by event type
+    type: str = "new_message"
+    data: dict
 
 
 class ReadReceiptUpdate(BaseModel):

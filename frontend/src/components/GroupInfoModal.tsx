@@ -18,11 +18,12 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [updatingTimer, setUpdatingTimer] = useState(false);
 
   if (!isOpen) return null;
 
   const currentUser = conversation.participants.find(p => p.id === currentUserId);
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = conversation.type === 'direct' || currentUser?.role === 'admin';
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -37,7 +38,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
       const results = await apiClient.searchUsers(query);
       // Filter out existing members
       const existingIds = new Set(conversation.participants.map(p => p.id));
-      setSearchResults(results.filter((u: any) => !existingIds.has(u.id)));
+      setSearchResults((results as Array<{id:number;username:string;display_name:string;avatar_url?:string;status:string}>).filter((u) => !existingIds.has(u.id)));
     } catch (err) {
       console.error(err);
     } finally {
@@ -77,6 +78,25 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
     }
   };
 
+  const handleTimerChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value ? parseInt(e.target.value, 10) : null;
+    setUpdatingTimer(true);
+    try {
+      await apiClient.updateDisappearingMessages(conversation.id, val);
+      toast.success('Disappearing messages timer updated');
+      onUpdate();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update timer');
+    } finally {
+      setUpdatingTimer(false);
+    }
+  };
+
+  const otherParticipant = conversation.type === 'direct' ? conversation.participants.find(p => p.id !== currentUserId) : null;
+  const avatarName = conversation.type === 'group' ? (conversation.name?.charAt(0).toUpperCase() || 'G') : (otherParticipant?.display_name?.charAt(0).toUpperCase() || '?');
+  const title = conversation.type === 'group' ? (conversation.name || 'Group Chat') : (otherParticipant?.display_name || 'Chat');
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
@@ -89,27 +109,54 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
             <X className="w-5 h-5" />
           </button>
           
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold shadow-md mb-3">
-            {conversation.name?.charAt(0).toUpperCase() || 'G'}
+          <div className="w-20 h-20 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-white text-3xl font-bold shadow-md mb-3">
+            {avatarName}
           </div>
-          <h2 className="text-xl font-bold text-gray-900">{conversation.name || 'Group Chat'}</h2>
-          <p className="text-sm text-gray-500 mt-1">{conversation.participants.length} members</p>
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          {conversation.type === 'group' && (
+            <p className="text-sm text-gray-500 mt-1">{conversation.participants.length} members</p>
+          )}
         </div>
 
-        {/* Member List */}
-        <div className="flex-1 overflow-y-auto p-2">
-          {/* Add Member Toggle */}
-          {isAdmin && !showAddMember && (
-            <button
-              onClick={() => setShowAddMember(true)}
-              className="w-full flex items-center p-3 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors font-medium"
-            >
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
-                <UserPlus className="w-5 h-5" />
-              </div>
-              Add members
-            </button>
+        {/* Settings Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Disappearing Messages */}
+          {isAdmin && (
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Disappearing messages</h3>
+              <p className="text-xs text-gray-500 mb-3">For more privacy, new messages will disappear for everyone after the selected duration.</p>
+              <select
+                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+                value={conversation.disappearing_messages_seconds || ''}
+                onChange={handleTimerChange}
+                disabled={updatingTimer}
+              >
+                <option value="">Off</option>
+                <option value="5">5 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="86400">24 hours</option>
+              </select>
+            </div>
           )}
+
+          {/* Member List (Groups only) */}
+          {conversation.type === 'group' && (
+            <div>
+              {/* Add Member Toggle */}
+              {isAdmin && !showAddMember && (
+                <button
+                  onClick={() => setShowAddMember(true)}
+                  className="w-full flex items-center p-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                    <UserPlus className="w-5 h-5" />
+                  </div>
+                  Add members
+                </button>
+              )}
 
           {/* Add Member Search Area */}
           {showAddMember && (
@@ -123,12 +170,12 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
               <input
                 type="text"
                 placeholder="Name or username"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 value={searchQuery}
                 onChange={handleSearch}
                 autoFocus
               />
-              {searching && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4 text-indigo-600" />}
+              {searching && <Loader2 className="w-5 h-5 animate-spin mx-auto mt-4 text-blue-600" />}
               {!searching && searchResults.length > 0 && (
                 <ul className="mt-2 divide-y divide-gray-100">
                   {searchResults.map((u) => (
@@ -145,7 +192,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
                       <button
                         onClick={() => handleAddMember(u.id)}
                         disabled={loadingAction === u.id}
-                        className="text-indigo-600 text-sm font-medium hover:text-indigo-800 disabled:opacity-50"
+                        className="text-blue-600 text-sm font-medium hover:text-blue-800 disabled:opacity-50"
                       >
                         {loadingAction === u.id ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
                       </button>
@@ -173,7 +220,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
                     <div>
                       <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
                         {isMe ? 'You' : p.display_name}
-                        {p.role === 'admin' && <Shield className="w-3 h-3 text-indigo-500" />}
+                        {p.role === 'admin' && <Shield className="w-3 h-3 text-blue-500" />}
                       </p>
                       <p className="text-xs text-gray-500">{p.status === 'online' ? 'Online' : 'Offline'}</p>
                     </div>
@@ -193,6 +240,8 @@ export default function GroupInfoModal({ isOpen, onClose, conversation, currentU
               );
             })}
           </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -6,9 +6,19 @@ from datetime import datetime
 
 from app.database.database import get_db
 from app.models.models import User, Conversation, Message, MessageReceipt, ConversationType, conversation_participants
-from app.schemas import ConversationCreate, ConversationResponse, ConversationListItem, AddParticipantRequest, RemoveParticipantRequest, UserResponse, ConversationParticipantResponse
+from app.schemas import (
+    ConversationCreate, 
+    ConversationResponse, 
+    ConversationListItem, 
+    AddParticipantRequest, 
+    RemoveParticipantRequest, 
+    UpdateDisappearingTimerRequest, 
+    UserResponse, 
+    ConversationParticipantResponse
+)
 from app.routers.auth import get_current_user
 from app.models.models import UserRole
+from app.routers.websocket import manager
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -434,3 +444,96 @@ async def remove_member(
     await db.commit()
 
     return {"detail": "Member removed successfully"}
+
+
+@router.put("/{conversation_id}/disappearing", response_model=ConversationResponse)
+async def update_disappearing_timer(
+    conversation_id: int,
+    request: UpdateDisappearingTimerRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update disappearing messages timer for a conversation"""
+    result = await db.execute(
+        select(Conversation)
+        .where(Conversation.id == conversation_id)
+        .options(selectinload(Conversation.participants))
+    )
+    conversation = result.scalar_one_or_none()
+
+    if not conversation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found",
+        )
+
+    if current_user not in conversation.participants:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not a member of this conversation",
+        )
+
+    if conversation.type == ConversationType.GROUP:
+        # Check if admin
+        role_result = await db.execute(
+            select(conversation_participants.c.role)
+            .where(
+                and_(
+                    conversation_participants.c.conversation_id == conversation_id,
+                    conversation_participants.c.user_id == current_user.id
+                )
+            )
+        )
+        role = role_result.scalar_one_or_none()
+        if role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admins can change settings",
+            )
+
+    conversation.disappearing_messages_seconds = request.disappearing_messages_seconds
+    conversation.updated_at = datetime.utcnow()
+    await db.commit()
+    await db.refresh(conversation)
+
+    # Get participant roles for response
+    roles_result = await db.execute(
+        select(conversation_participants.c.user_id, conversation_participants.c.role)
+        .where(conversation_participants.c.conversation_id == conversation_id)
+    )
+    roles_map = {row.user_id: row.role for row in roles_result.all()}
+
+    participant_responses = []
+    for p in conversation.participants:
+        participant_responses.append(
+            ConversationParticipantResponse(
+                id=p.id,
+                username=p.username,
+                display_name=p.display_name,
+                avatar_url=p.avatar_url,
+                status=p.status,
+                role=roles_map.get(p.id, UserRole.MEMBER)
+            )
+        )
+
+    response = ConversationResponse(
+        id=conversation.id,
+        type=conversation.type,
+        name=conversation.name,
+        disappearing_messages_seconds=conversation.disappearing_messages_seconds,
+        created_at=conversation.created_at,
+        updated_at=conversation.updated_at,
+        participants=participant_responses,
+        unread_count=0
+    )
+
+    # Broadcast settings change
+    ws_payload = {
+        "type": "settings_updated",
+        "conversation_id": conversation.id,
+        "disappearing_messages_seconds": request.disappearing_messages_seconds,
+    }
+    for p in conversation.participants:
+        await manager.send_personal_message(ws_payload, p.id)
+
+    return response

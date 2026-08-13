@@ -41,7 +41,7 @@ export default function ConversationList({
   const getConversationAvatar = (conv: Conversation) => {
     if (conv.type === 'group') {
       return (
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-lg shadow-sm">
           {conv.name?.charAt(0).toUpperCase() || 'G'}
         </div>
       );
@@ -50,11 +50,11 @@ export default function ConversationList({
     const initial = otherParticipant ? otherParticipant.display_name.charAt(0).toUpperCase() : '?';
     
     if (otherParticipant?.avatar_url) {
-      return <img src={otherParticipant.avatar_url} alt="avatar" className="w-12 h-12 rounded-full object-cover shadow-sm" />;
+      return <img src={otherParticipant.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover shadow-sm" />;
     }
     
     return (
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 font-semibold text-lg shadow-sm">
         {initial}
       </div>
     );
@@ -77,36 +77,38 @@ export default function ConversationList({
         <div
           key={conv.id}
           onClick={() => onSelect(conv.id)}
-          className={`flex items-center p-4 cursor-pointer transition-all duration-200 border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
-            selectedId === conv.id ? 'bg-indigo-50/80 dark:bg-indigo-900/30 border-l-4 border-l-indigo-600 dark:border-l-indigo-400' : 'hover:bg-gray-100/80 dark:hover:bg-gray-800/50 border-l-4 border-l-transparent'
+          className={`flex items-center p-2.5 mx-1.5 my-0.5 cursor-pointer transition-colors duration-150 rounded-lg ${
+            selectedId === conv.id 
+              ? 'bg-[#E5E7EB] dark:bg-[#2A2A2A]' 
+              : 'hover:bg-[#F3F4F6] dark:hover:bg-[#2A2A2A]/60'
           }`}
         >
-          <div className="relative mr-4">
+          <div className="relative mr-3">
             {getConversationAvatar(conv)}
             {/* Status dot for direct messages */}
             {conv.type === 'direct' && (
-              <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${
+              <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#1E1E1E] ${
                 conv.participants.find(p => p.id !== currentUserId)?.status === 'online' ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'
               }`}></div>
             )}
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-baseline mb-1">
-              <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white truncate">
+            <div className="flex justify-between items-baseline mb-0.5">
+              <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {getConversationName(conv)}
               </h3>
-              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap ml-2">
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap ml-2">
                 {formatTime(conv.last_message_timestamp)}
               </span>
             </div>
             
             <div className="flex justify-between items-center">
-              <p className={`text-sm truncate ${conv.unread_count > 0 ? 'text-gray-900 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+              <p className={`text-[13px] truncate ${conv.unread_count > 0 ? 'text-gray-900 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                 {conv.last_message_preview || 'No messages yet'}
               </p>
               {conv.unread_count > 0 && (
-                <span className="ml-2 bg-indigo-600 dark:bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                <span className="ml-2 bg-blue-500 dark:bg-blue-600 text-white text-[10px] font-bold px-1.5 py-[1px] rounded-full min-w-[18px] text-center">
                   {conv.unread_count}
                 </span>
               )}

@@ -4,12 +4,6 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-interface ApiResponse<T> {
-  data?: T;
-  detail?: string;
-  error?: string;
-}
-
 class ApiClient {
   private token: string | null = null;
 
@@ -45,7 +39,7 @@ class ApiClient {
   async request<T>(
     endpoint: string,
     method: string = 'GET',
-    data?: Record<string, any>,
+    data?: Record<string, unknown>,
   ): Promise<T> {
     const url = `${API_URL}${endpoint}`;
 
@@ -54,7 +48,7 @@ class ApiClient {
       headers: this.getHeaders(),
     };
 
-    if (data && (method === 'POST' || method === 'PUT')) {
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
       options.body = JSON.stringify(data);
     }
 
@@ -62,17 +56,23 @@ class ApiClient {
       const response = await fetch(url, options);
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.setToken(null);
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+        }
+        
         let errorMessage = `HTTP Error: ${response.status}`;
         try {
           const errorData = await response.json();
           errorMessage = errorData.detail || errorMessage;
-        } catch (e) {
+        } catch {
           // Ignore JSON parse errors
         }
         throw new Error(errorMessage);
       }
 
-      // Handle empty responses (204 No Content)
       if (response.status === 204) {
         return {} as T;
       }
@@ -92,7 +92,7 @@ class ApiClient {
     password: string;
     avatar_url?: string;
   }) {
-    return this.request<any>('/auth/register', 'POST', payload);
+    return this.request<unknown>('/auth/register', 'POST', payload as Record<string, unknown>);
   }
 
   async login(payload: {
@@ -100,7 +100,7 @@ class ApiClient {
     phone_number?: string;
     password: string;
   }) {
-    return this.request<any>('/auth/login', 'POST', payload);
+    return this.request<unknown>('/auth/login', 'POST', payload as Record<string, unknown>);
   }
 
   async logout() {
@@ -109,18 +109,18 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    return this.request<any>('/auth/me', 'GET');
+    return this.request<unknown>('/auth/me', 'GET');
   }
 
   async updateProfile(payload: { display_name?: string; avatar_url?: string; status?: string }) {
-    return this.request<any>('/users/me', 'PUT', payload);
+    return this.request<unknown>('/users/me', 'PUT', payload as Record<string, unknown>);
   }
 
   // User endpoints
   async searchUsers(query: string) {
     const params = new URLSearchParams();
     params.append('q', query);
-    return this.request<any>(`/users/search?${params.toString()}`, 'GET');
+    return this.request<unknown>(`/users/search?${params.toString()}`, 'GET');
   }
 
   // Conversation endpoints
@@ -129,14 +129,14 @@ class ApiClient {
     if (skip !== undefined) params.append('skip', skip.toString());
     if (limit !== undefined) params.append('limit', limit.toString());
     const queryString = params.toString();
-    return this.request<any>(
+    return this.request<unknown>(
       `/conversations${queryString ? '?' + queryString : ''}`,
       'GET'
     );
   }
 
   async getConversation(conversationId: number) {
-    return this.request<any>(`/conversations/${conversationId}`, 'GET');
+    return this.request<unknown>(`/conversations/${conversationId}`, 'GET');
   }
 
   async createConversation(payload: {
@@ -144,15 +144,31 @@ class ApiClient {
     name?: string;
     participant_ids: number[];
   }) {
-    return this.request<any>('/conversations', 'POST', payload);
+    return this.request<unknown>('/conversations', 'POST', payload as Record<string, unknown>);
+  }
+
+  async createGroup(name: string, participantIds: number[]) {
+    return this.request<any>('/conversations', 'POST', {
+      type: 'group',
+      name,
+      participant_ids: participantIds,
+    });
+  }
+
+  async updateDisappearingMessages(conversationId: number, seconds: number | null) {
+    return this.request<any>(
+      `/conversations/${conversationId}/disappearing`,
+      'PUT',
+      { disappearing_messages_seconds: seconds }
+    );
   }
 
   async addMember(conversationId: number, userId: number) {
-    return this.request<any>(`/conversations/${conversationId}/members`, 'POST', { user_id: userId });
+    return this.request<unknown>(`/conversations/${conversationId}/members`, 'POST', { user_id: userId });
   }
 
   async removeMember(conversationId: number, userId: number) {
-    return this.request<any>(`/conversations/${conversationId}/members/${userId}`, 'DELETE');
+    return this.request<unknown>(`/conversations/${conversationId}/members/${userId}`, 'DELETE');
   }
 
   // Message endpoints
@@ -161,31 +177,72 @@ class ApiClient {
     if (skip !== undefined) params.append('skip', skip.toString());
     if (limit !== undefined) params.append('limit', limit.toString());
     const queryString = params.toString();
-    return this.request<any>(
-      `/conversations/${conversationId}/messages${
-        queryString ? '?' + queryString : ''
-      }`,
+    return this.request<unknown>(
+      `/conversations/${conversationId}/messages${queryString ? '?' + queryString : ''}`,
       'GET'
     );
   }
 
   async sendMessage(
     conversationId: number,
-    payload: { content: string }
+    payload: { content: string; reply_to_id?: number; message_type?: string }
   ) {
-    return this.request<any>(
+    return this.request<unknown>(
       `/conversations/${conversationId}/messages`,
       'POST',
-      payload
+      payload as Record<string, unknown>
     );
   }
 
   async markMessagesAsRead(conversationId: number, messageIds: number[]) {
-    return this.request<any>(
+    return this.request<unknown>(
       `/conversations/${conversationId}/messages/mark-as-read`,
       'POST',
       { message_ids: messageIds }
     );
+  }
+
+  // Attachment endpoints
+  async uploadAttachment(conversationId: number, messageId: number, file: File) {
+    const url = `${API_URL}/conversations/${conversationId}/messages/${messageId}/attachment`;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: this.token ? { 'Authorization': `Bearer ${this.token}` } : {},
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Upload failed: ${response.status}`;
+      try {
+        const err = await response.json();
+        errorMessage = err.detail || errorMessage;
+      } catch { /* ignore */ }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  }
+
+  // Reaction endpoints
+  async addReaction(conversationId: number, messageId: number, emoji: string) {
+    return this.request<unknown>(
+      `/conversations/${conversationId}/messages/${messageId}/reactions`,
+      'POST',
+      { emoji }
+    );
+  }
+
+  async removeReaction(conversationId: number, messageId: number, emoji: string) {
+    const url = `${API_URL}/conversations/${conversationId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    if (!response.ok) throw new Error(`Remove reaction failed: ${response.status}`);
+    return await response.json();
   }
 }
 
