@@ -13,7 +13,7 @@ class ConversationParticipantResponse(BaseModel):
     role: Optional[UserRole] = UserRole.MEMBER
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConversationUserSettingsResponse(BaseModel):
@@ -23,7 +23,7 @@ class ConversationUserSettingsResponse(BaseModel):
     cleared_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConversationBase(BaseModel):
@@ -51,7 +51,7 @@ class ConversationResponse(ConversationBase):
     settings: Optional[ConversationUserSettingsResponse] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConversationListItem(BaseModel):
@@ -66,7 +66,7 @@ class ConversationListItem(BaseModel):
     participants: List[ConversationParticipantResponse]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AddParticipantRequest(BaseModel):

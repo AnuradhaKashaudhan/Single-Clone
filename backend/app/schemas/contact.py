@@ -13,7 +13,7 @@ class ContactResponse(BaseModel):
     last_seen: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ContactSearchRequest(BaseModel):
