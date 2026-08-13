@@ -13,7 +13,9 @@ This is a full-stack, real-time secure messaging platform inspired by Signal. It
 - **Online Presence**: View who is currently online with live status updates.
 - **JWT Authentication**: Secure user registration and login with encrypted passwords.
 - **Search & Contacts**: Discover users on the platform and initiate direct conversations organically.
+- **Pixel-Perfect UI Clone**: An exact, dynamic replication of the native Signal Desktop interface including an interactive left rail, custom tooltips, message archiving, and disappearing messages settings.
 - **Dark Mode**: Beautiful, responsive, toggle-able dark and light themes spanning all UI components.
+- **Reviewer-Friendly**: The login page features a "Demo Accounts" card that auto-fills credentials with a single click for seamless testing.
 - **SQLite Persistence**: No mocked data. All users, conversations, messages, and receipts are safely persisted in SQLite.
 
 ## Tech Stack
@@ -192,10 +194,15 @@ npm run dev
 
 ## Seed Accounts
 
-To help reviewers and evaluators quickly test the platform, several accounts are pre-seeded in the database:
-- **Alice Smith**: `alice` / `password123`
-- **Bob Jones**: `bob` / `password123`
-- **Charlie Brown**: `charlie` / `password123`
+To help reviewers and evaluators quickly test the platform, several accounts are pre-seeded in the database. 
+You do **not** need to manually type these; the login page (`/login`) includes a **Demo Accounts** card. Simply click any username, and it will instantly auto-fill the login form for you!
+
+**Available Seed Accounts (Password for all is `password123`)**:
+- `alice_smith`
+- `bob_jones`
+- `carol_white`
+- `david_brown`
+- `emma_davis`
 
 ---
 
