@@ -23,6 +23,8 @@ from app.schemas.conversation import (
     RemoveParticipantRequest,
     ConversationParticipantResponse,
     UpdateDisappearingTimerRequest,
+    ConversationSettingsUpdate,
+    ConversationUserSettingsResponse,
 )
 from app.schemas.message import (
     MessageBase,

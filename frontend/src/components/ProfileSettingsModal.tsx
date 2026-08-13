@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
 import {
   X, User as UserIcon, Settings, Bell, Lock, Smartphone,
-  Monitor, Check, Loader2, LogOut, Users, MessageSquare, Phone
+  Monitor, Check, Loader2, LogOut, Users, MessageSquare, Phone,
+  MessageCircle, PieChart, History, Heart, Globe, Image as ImageIcon,
+  FolderPlus, Download, UploadCloud, ChevronDown
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -50,9 +52,12 @@ export default function ProfileSettingsModal({
   );
 
   // Keep profile form in sync when modal opens or currentUser changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayName(currentUser?.display_name || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvatarUrl(currentUser?.avatar_url || '');
     }
   }, [isOpen, currentUser]);
@@ -91,23 +96,19 @@ export default function ProfileSettingsModal({
     }
   };
 
-  const handleLogout = () => {
-    apiClient.logout();
-    router.push('/login');
-  };
-
   if (!isOpen) return null;
 
   // ── Nav items ──────────────────────────────────────────────────────────────
   const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'profile',       label: 'Profile',       icon: <UserIcon className="w-4 h-4" /> },
-    { id: 'general',       label: 'General',        icon: <Settings className="w-4 h-4" /> },
-    { id: 'appearance',    label: 'Appearance',     icon: <Monitor className="w-4 h-4" /> },
-    { id: 'chats',         label: 'Chats',          icon: <Smartphone className="w-4 h-4" /> },
-    { id: 'calls',         label: 'Calls',          icon: <Phone className="w-4 h-4" /> },
-    { id: 'notifications', label: 'Notifications',  icon: <Bell className="w-4 h-4" /> },
-    { id: 'privacy',       label: 'Privacy',        icon: <Lock className="w-4 h-4" /> },
-    { id: 'data',          label: 'Data Usage',     icon: <Check className="w-4 h-4" /> },
+    { id: 'general',       label: 'General',        icon: <Settings className="w-5 h-5" /> },
+    { id: 'appearance',    label: 'Appearance',     icon: <Monitor className="w-5 h-5" /> },
+    { id: 'chats',         label: 'Chats',          icon: <MessageCircle className="w-5 h-5" /> },
+    { id: 'calls',         label: 'Calls',          icon: <Phone className="w-5 h-5" /> },
+    { id: 'notifications', label: 'Notifications',  icon: <Bell className="w-5 h-5" /> },
+    { id: 'privacy',       label: 'Privacy',        icon: <Lock className="w-5 h-5" /> },
+    { id: 'data',          label: 'Data usage',     icon: <PieChart className="w-5 h-5" /> },
+    { id: 'backups',       label: 'Backups',        icon: <History className="w-5 h-5" /> },
+    { id: 'donate',        label: 'Donate to Signal',icon: <Heart className="w-5 h-5" /> },
   ];
 
   // ── Tab content renderer ───────────────────────────────────────────────────
@@ -197,33 +198,67 @@ export default function ProfileSettingsModal({
       // ── GENERAL ─────────────────────────────────────────────────────────────
       case 'general':
         return (
-          <div className="max-w-md mx-auto">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">General</h3>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800/50">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Keyboard Shortcuts</h4>
+          <div className="w-full max-w-2xl">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">General</h3>
+            
+            <div className="space-y-6">
+              {/* Profile Details */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-900 dark:text-gray-100">Phone Number</span>
+                  <span className="text-sm text-gray-500">+91 73981 31445</span>
+                </div>
+                <div className="flex items-start justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">Device Name</span>
+                    <span className="text-[11px] text-gray-500 mt-1">To change the name of this device, open Signal on your phone and navigate to Settings &gt; Linked devices</span>
+                  </div>
+                  <span className="text-sm text-gray-500">Windows</span>
+                </div>
               </div>
-              <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                <div className="flex items-center justify-between p-4">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Focus Search</span>
-                  <div className="flex gap-1">
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono text-gray-600 dark:text-gray-400">Ctrl/Cmd</kbd>
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono text-gray-600 dark:text-gray-400">K</kbd>
-                  </div>
+              
+              {/* System */}
+              <div className="pt-4">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">System</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Open at computer login</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Hide menu bar</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Minimize to system tray</span>
+                  </label>
                 </div>
-                <div className="flex items-center justify-between p-4">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">New Chat</span>
-                  <div className="flex gap-1">
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono text-gray-600 dark:text-gray-400">Ctrl/Cmd</kbd>
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono text-gray-600 dark:text-gray-400">Shift</kbd>
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono text-gray-600 dark:text-gray-400">N</kbd>
-                  </div>
+              </div>
+
+              {/* Permissions */}
+              <div className="pt-4">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Permissions</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Allow access to the microphone</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Allow access to the camera</span>
+                  </label>
                 </div>
-                <div className="flex items-center justify-between p-4">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Cancel Reply / Close Attachment</span>
-                  <div className="flex gap-1">
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs font-mono text-gray-600 dark:text-gray-400">Esc</kbd>
-                  </div>
+              </div>
+
+              {/* Updates */}
+              <div className="pt-4">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Updates</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Automatically download updates</span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -233,38 +268,56 @@ export default function ProfileSettingsModal({
       // ── APPEARANCE ──────────────────────────────────────────────────────────
       case 'appearance':
         return (
-          <div className="max-w-md mx-auto">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Appearance</h3>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-              {/* Dark Mode toggle */}
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <Monitor className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  <div>
-                    <span className="text-gray-900 dark:text-white font-medium block text-sm">Dark Mode</span>
-                    <span className="text-xs text-gray-500">Switch between light and dark themes</span>
-                  </div>
+          <div className="w-full max-w-2xl">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">Appearance</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 text-gray-500">
+                  <Globe className="w-4 h-4" />
+                  <span className="text-sm text-gray-900 dark:text-gray-100">Language</span>
                 </div>
-                <button
-                  onClick={toggleDarkMode}
-                  className={`w-11 h-6 rounded-full relative transition-colors ${darkMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}
-                  aria-label="Toggle dark mode"
-                >
-                  <div
-                    className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${darkMode ? 'translate-x-5' : 'translate-x-0'}`}
-                  />
-                </button>
+                <div className="relative">
+                  <select className="appearance-none bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg pl-3 pr-8 py-1.5 outline-none cursor-pointer">
+                    <option>System Language</option>
+                    <option>English</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2 pointer-events-none" />
+                </div>
               </div>
-              {/* System theme placeholder */}
-              <div className="flex items-center justify-between p-4 opacity-50 cursor-not-allowed">
-                <div className="flex items-center gap-3">
-                  <Monitor className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <span className="text-gray-900 dark:text-white font-medium block text-sm">System Theme</span>
-                    <span className="text-xs text-gray-500">Follow system dark/light preference</span>
-                  </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-900 dark:text-gray-100 ml-7">Theme</span>
+                <div className="relative">
+                  <select 
+                    value={darkMode ? 'Dark' : 'System'} 
+                    onChange={(e) => {
+                      if (e.target.value === 'Dark' && !darkMode) toggleDarkMode();
+                      if (e.target.value === 'System' && darkMode) toggleDarkMode();
+                    }}
+                    className="appearance-none bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg pl-3 pr-8 py-1.5 outline-none cursor-pointer"
+                  >
+                    <option>System</option>
+                    <option>Light</option>
+                    <option>Dark</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2 pointer-events-none" />
                 </div>
-                <span className="text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-500 px-2 py-1 rounded">Soon</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-900 dark:text-gray-100 ml-7">Chat color</span>
+                <div className="w-4 h-4 rounded-full bg-blue-600 mr-2"></div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-900 dark:text-gray-100 ml-7">Zoom level</span>
+                <div className="relative">
+                  <select className="appearance-none bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg pl-3 pr-8 py-1.5 outline-none cursor-pointer">
+                    <option>100%</option>
+                    <option>125%</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>
@@ -272,11 +325,176 @@ export default function ProfileSettingsModal({
 
       // ── CHATS ───────────────────────────────────────────────────────────────
       case 'chats':
-        return <ComingSoonPanel title="Chats" icon={<Smartphone className="w-8 h-8 text-gray-400" />} />;
+        return (
+          <div className="w-full max-w-2xl">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">Chats</h3>
+            
+            <div className="space-y-8">
+              {/* Chats Checkboxes */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Chats</h4>
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Spell check text entered in message composition box</span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Show text formatting popover when text is selected</span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Generate link previews</span>
+                      <span className="text-[11px] text-gray-500 mt-0.5">Retrieve link previews directly from websites for messages you send.</span>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Use address book photos</span>
+                      <span className="text-[11px] text-gray-500 mt-0.5">Display contact photos from your address book if available.</span>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Convert typed emoticons to emoji</span>
+                      <span className="text-[11px] text-gray-500 mt-0.5">For example, :-) will be converted to 🙂</span>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Keep muted chats archived</span>
+                      <span className="text-[11px] text-gray-500 mt-0.5">Muted chats that are archived will remain archived when a new message arrives.</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Emoji Skin Tone */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-900 dark:text-gray-100">Emoji skin tone</span>
+                <div className="flex gap-2">
+                  <span className="cursor-pointer">👋</span>
+                  <span className="cursor-pointer">👋🏻</span>
+                  <span className="cursor-pointer">👋🏼</span>
+                  <span className="cursor-pointer">👋🏽</span>
+                  <span className="cursor-pointer">👋🏾</span>
+                  <span className="cursor-pointer">👋🏿</span>
+                </div>
+              </div>
+
+              {/* Chat Folders */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Chat folders</h4>
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">Add a chat folder</span>
+                    <span className="text-[11px] text-blue-500">Organize your chats into folders and quickly switch between them on your chat list.</span>
+                  </div>
+                  <button className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    Set up
+                  </button>
+                </div>
+              </div>
+
+              {/* Export/Import */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col pr-8">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">Export chat history</span>
+                    <span className="text-[11px] text-blue-500">Export a machine-readable JSON copy of all your chats. Disappearing messages will not be exported.</span>
+                  </div>
+                  <button className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
+                    Export
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col pr-8">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">Import contacts</span>
+                    <span className="text-[11px] text-blue-500">Import all Signal groups and contacts from your mobile device. Last import at 8/13/2026 10:42 PM</span>
+                  </div>
+                  <button className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
+                    Import now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
 
       // ── CALLS ───────────────────────────────────────────────────────────────
       case 'calls':
-        return <ComingSoonPanel title="Calls" icon={<Phone className="w-8 h-8 text-gray-400" />} />;
+        return (
+          <div className="w-full max-w-2xl">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">Calls</h3>
+            
+            <div className="space-y-8">
+              {/* Calling */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Calling</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Enable incoming calls</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Play calling sounds</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Devices */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Devices</h4>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-900 dark:text-gray-100">Video</label>
+                    <div className="relative">
+                      <select className="w-full appearance-none bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg pl-3 pr-8 py-2 outline-none cursor-pointer">
+                        <option>HP TrueVision HD Camera (04f2:b6f1)</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2.5 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-900 dark:text-gray-100">Microphone</label>
+                    <div className="relative">
+                      <select className="w-full appearance-none bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg pl-3 pr-8 py-2 outline-none cursor-pointer">
+                        <option>Communication - Microphone Array (Intel® Smart Sound Technology)</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2.5 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-gray-900 dark:text-gray-100">Speakers</label>
+                    <div className="relative">
+                      <select className="w-full appearance-none bg-gray-100 dark:bg-[#2C2C2E] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg pl-3 pr-8 py-2 outline-none cursor-pointer">
+                        <option>Communication - Speaker (Realtek(R) Audio)</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-2.5 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advanced */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Advanced</h4>
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input type="checkbox" className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Always relay calls</span>
+                    <span className="text-[11px] text-gray-500 mt-0.5 leading-tight">Relay all calls through the Signal server to avoid revealing your IP address to your contact. Enabling will reduce call quality.</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        );
 
       // ── NOTIFICATIONS ───────────────────────────────────────────────────────
       case 'notifications':
@@ -306,7 +524,125 @@ export default function ProfileSettingsModal({
 
       // ── DATA USAGE ──────────────────────────────────────────────────────────
       case 'data':
-        return <ComingSoonPanel title="Data Usage" icon={<Check className="w-8 h-8 text-gray-400" />} />;
+        return (
+          <div className="max-w-2xl mx-auto">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-8">Data usage</h3>
+            
+            <div className="mb-8">
+              <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-4">Media auto-download</h4>
+              <div className="space-y-3 mb-2">
+                {['Photos', 'Videos', 'Audio', 'Documents'].map((item) => (
+                  <label key={item} className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" />
+                    <span className="text-[14px] text-gray-900 dark:text-gray-100">{item}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[13px] text-gray-500">Voice messages and stickers are always auto-downloaded.</p>
+            </div>
+
+            <hr className="border-gray-200 dark:border-gray-800 my-8" />
+
+            <div className="flex items-start justify-between">
+              <div>
+                <h4 className="text-[14px] font-medium text-gray-900 dark:text-white mb-1">Sent media quality</h4>
+                <p className="text-[13px] text-gray-500">Sending high quality media will use more data.</p>
+              </div>
+              <div className="relative">
+                <select className="appearance-none bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-[13px] px-4 py-1.5 pr-8 rounded-md outline-none cursor-pointer">
+                  <option>Standard</option>
+                  <option>High</option>
+                </select>
+                <ChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+        );
+
+      // ── BACKUPS ─────────────────────────────────────────────────────────────
+      case 'backups':
+        return (
+          <div className="max-w-2xl mx-auto">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">Backups</h3>
+            <p className="text-[13px] text-gray-700 dark:text-gray-300 mb-8 text-center max-w-lg mx-auto">
+              Back up your message history so you never lose data when you get a new phone or reinstall Signal.
+            </p>
+
+            <div className="flex gap-4 mb-10">
+              <History className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-[14px] font-medium text-gray-900 dark:text-white mb-1">Signal Secure Backups</h4>
+                <p className="text-[13px] text-gray-500">
+                  Automatic backups with Signal's secure, end-to-end encrypted storage service. Get started on your phone. <a href="#" className="text-blue-600 hover:underline">Learn more.</a>
+                </p>
+              </div>
+            </div>
+
+            <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-4">Other ways to back up</h4>
+            
+            <div className="flex gap-4 items-start justify-between">
+              <div className="flex gap-4">
+                <svg className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <div>
+                  <h4 className="text-[14px] font-medium text-gray-900 dark:text-white mb-1">Desktop backups</h4>
+                  <p className="text-[13px] text-gray-500 max-w-sm">
+                    Create an end-to-end encrypted backup that you can restore on your phone.
+                  </p>
+                </div>
+              </div>
+              <button className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white text-[13px] font-medium rounded-full transition-colors">
+                Set up
+              </button>
+            </div>
+          </div>
+        );
+
+      // ── DONATE TO SIGNAL ────────────────────────────────────────────────────
+      case 'donate':
+        return (
+          <div className="max-w-2xl mx-auto flex flex-col items-center">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-12 self-start">Donate to Signal</h3>
+            
+            <div className="w-20 h-20 rounded-full bg-[#8299B2] flex items-center justify-center text-white text-3xl font-medium shadow-sm mb-6">
+              {currentUser?.avatar_url ? (
+                <img src={currentUser.avatar_url} alt="Profile" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                currentUser?.display_name?.charAt(0).toLowerCase() || 'u'
+              )}
+            </div>
+
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Proudly nonprofit</h2>
+            <p className="text-[13px] text-gray-600 dark:text-gray-400 text-center max-w-md mb-6 leading-relaxed">
+              Donate to support private messaging. Keep Signal independent and ad-free. <a href="#" className="text-blue-600 hover:underline">Read more</a>
+            </p>
+            
+            <button className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium rounded-full transition-colors mb-12">
+              Donate
+            </button>
+
+            <div className="w-full max-w-lg">
+              <hr className="border-gray-200 dark:border-gray-800 mb-6" />
+              
+              <a href="#" className="flex items-center justify-between group cursor-pointer mb-6">
+                <div className="flex items-center gap-3 text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                  <div className="w-5 h-5 rounded-full border border-current flex items-center justify-center">
+                    <span className="text-xs font-medium">?</span>
+                  </div>
+                  <span className="text-[14px] font-medium">Donor FAQs</span>
+                </div>
+                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+
+              <p className="text-[12px] text-gray-500">
+                Badges and monthly donations can be managed on your mobile device.
+              </p>
+            </div>
+          </div>
+        );
 
       default:
         return null;
@@ -315,36 +651,41 @@ export default function ProfileSettingsModal({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-2xl shadow-2xl flex max-h-[90vh] overflow-hidden transition-colors">
+    <div className="fixed inset-0 md:left-14 bg-white dark:bg-[#1C1C1E] z-50 flex overflow-hidden transition-colors shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.3)]">
+      <div className="w-full h-full flex">
 
         {/* Left sidebar nav */}
-        <div className="w-52 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 hidden md:flex flex-col flex-shrink-0">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4 px-2">Settings</h2>
+        <div className="w-[280px] bg-gray-50 dark:bg-[#1E1E1E] border-r border-gray-200 dark:border-gray-800 p-0 hidden md:flex flex-col flex-shrink-0">
+          <div className="px-5 pt-8 pb-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#8299B2] flex items-center justify-center text-white text-lg font-medium shadow-sm">
+              {currentUser?.avatar_url ? (
+                <img src={currentUser.avatar_url} alt="Profile" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                currentUser?.display_name?.charAt(0).toLowerCase() || 'u'
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{currentUser?.display_name || 'User'}</span>
+              <span className="text-[11px] text-gray-500">+91 73981 31445</span>
+            </div>
+          </div>
 
-          <nav className="space-y-0.5 flex-1">
-            {navItems.map(({ id, label, icon }) => (
+          <nav className="space-y-0.5 flex-1 px-3">
+            {navItems.map(({ id, label, icon }, i) => (
               <button
-                key={id}
+                key={`${id}-${i}`}
                 onClick={() => setActiveTab(id)}
-                className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
-                  activeTab === id
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
+                  activeTab === id && i < 7
+                    ? 'bg-gray-200/70 text-black dark:bg-gray-700/50 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
                 }`}
               >
-                {icon}
+                <div className="text-gray-500">{icon}</div>
                 {label}
               </button>
             ))}
           </nav>
-
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-medium transition-colors mt-2"
-          >
-            <LogOut className="w-4 h-4" /> Log out
-          </button>
         </div>
 
         {/* Right content area */}
@@ -375,7 +716,7 @@ export default function ProfileSettingsModal({
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto px-10 py-12 bg-white dark:bg-[#1C1C1E]">
             {renderContent()}
           </div>
         </div>

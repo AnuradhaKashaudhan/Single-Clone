@@ -7,7 +7,8 @@ from datetime import datetime
 from app.database.database import get_db
 from app.models.models import (
     User, Conversation, Message, MessageReceipt,
-    MessageStatus, ReceiptStatus, MessageType, Attachment, MessageReaction
+    MessageStatus, ReceiptStatus, MessageType, Attachment, MessageReaction,
+    ConversationUserSettings, BlockedUser, ConversationType
 )
 from app.schemas import (
     MessageCreate, MessageResponse, MessageStatusUpdate,
@@ -108,6 +109,17 @@ async def get_messages(
     if current_user not in conversation.participants:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member of this conversation")
 
+    # Get settings for cleared_at
+    settings_result = await db.execute(
+        select(ConversationUserSettings).where(
+            and_(
+                ConversationUserSettings.conversation_id == conversation_id,
+                ConversationUserSettings.user_id == current_user.id
+            )
+        )
+    )
+    settings = settings_result.scalar_one_or_none()
+
     query = (
         select(Message)
         .where(
@@ -116,6 +128,13 @@ async def get_messages(
                 or_(Message.expires_at == None, Message.expires_at > datetime.utcnow())
             )
         )
+    )
+    
+    if settings and settings.cleared_at:
+        query = query.where(Message.created_at > settings.cleared_at)
+
+    result = await db.execute(
+        query
         .order_by(Message.created_at.desc())
         .offset(skip)
         .limit(limit)
@@ -127,8 +146,6 @@ async def get_messages(
             selectinload(Message.reply_to).selectinload(Message.sender),
         )
     )
-
-    result = await db.execute(query)
     messages = list(reversed(result.scalars().all()))
     return [_build_message_response(msg) for msg in messages]
 
@@ -153,6 +170,22 @@ async def send_message(
 
     if current_user not in conversation.participants:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member of this conversation")
+
+    # Check for blocked users
+    # For a direct chat, if either blocked the other, deny sending.
+    if conversation.type == ConversationType.DIRECT:
+        other_user = next((p for p in conversation.participants if p.id != current_user.id), None)
+        if other_user:
+            block_check = await db.execute(
+                select(BlockedUser).where(
+                    or_(
+                        and_(BlockedUser.blocker_id == current_user.id, BlockedUser.blocked_id == other_user.id),
+                        and_(BlockedUser.blocker_id == other_user.id, BlockedUser.blocked_id == current_user.id),
+                    )
+                )
+            )
+            if block_check.first():
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot send message to blocked contact")
 
     # Validate reply_to if provided
     if request.reply_to_id:
@@ -313,7 +346,44 @@ async def mark_messages_as_read(
     conv = result.scalar_one_or_none()
     if conv:
         for p in conv.participants:
-            if p.id != current_user.id:
-                await manager.send_personal_message(ws_payload, p.id)
+            await manager.send_personal_message(ws_payload, p.id)
 
     return {"detail": f"Marked {len(receipts)} messages as read"}
+
+
+@router.post("/mark-unread")
+async def mark_messages_as_unread(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark the latest messages in the conversation as unread for the current user"""
+    # Simply revert the latest read receipts to DELIVERED
+    result = await db.execute(
+        select(MessageReceipt)
+        .join(Message)
+        .where(
+            and_(
+                Message.conversation_id == conversation_id,
+                MessageReceipt.user_id == current_user.id,
+                MessageReceipt.status == ReceiptStatus.READ
+            )
+        )
+        .order_by(Message.created_at.desc())
+        .limit(20)
+    )
+    receipts = result.scalars().all()
+    for r in receipts:
+        r.status = ReceiptStatus.DELIVERED
+    
+    await db.commit()
+
+    # Tell frontend to update settings/unread state
+    ws_payload = {
+        "type": "settings_updated",
+        "conversation_id": conversation_id,
+        "user_id": current_user.id,
+        "action": "marked_unread"
+    }
+    await manager.send_personal_message(ws_payload, current_user.id)
+    return {"detail": "Conversation marked as unread"}

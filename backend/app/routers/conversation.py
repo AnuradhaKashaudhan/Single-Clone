@@ -5,7 +5,17 @@ from sqlalchemy.orm import selectinload
 from datetime import datetime
 
 from app.database.database import get_db
-from app.models.models import User, Conversation, Message, MessageReceipt, ConversationType, conversation_participants
+from app.models.models import (
+    User,
+    Conversation,
+    ConversationType,
+    UserRole,
+    conversation_participants,
+    Message,
+    MessageReceipt,
+    ReceiptStatus,
+    ConversationUserSettings,
+)
 from app.schemas import (
     ConversationCreate, 
     ConversationResponse, 
@@ -14,10 +24,11 @@ from app.schemas import (
     RemoveParticipantRequest, 
     UpdateDisappearingTimerRequest, 
     UserResponse, 
-    ConversationParticipantResponse
+    ConversationParticipantResponse,
+    ConversationUserSettingsResponse,
+    ConversationSettingsUpdate
 )
 from app.routers.auth import get_current_user
-from app.models.models import UserRole
 from app.routers.websocket import manager
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
@@ -32,19 +43,25 @@ async def list_conversations(
 ):
     """List all conversations for current user, ordered by most recent activity"""
     # Get all conversations where user is a participant
-    query = select(Conversation).join(
+    query = select(Conversation, ConversationUserSettings).join(
         conversation_participants,
         Conversation.id == conversation_participants.c.conversation_id
+    ).outerjoin(
+        ConversationUserSettings,
+        and_(
+            ConversationUserSettings.conversation_id == Conversation.id,
+            ConversationUserSettings.user_id == current_user.id
+        )
     ).where(
         conversation_participants.c.user_id == current_user.id
     ).order_by(Conversation.updated_at.desc()).options(selectinload(Conversation.participants))
 
     result = await db.execute(query)
-    conversations = result.scalars().all()
+    rows = result.all()
 
     # Build response with last message info and unread count
     response = []
-    for conv in conversations:
+    for conv, settings in rows:
         # Get last message
         msg_result = await db.execute(
             select(Message).where(
@@ -54,15 +71,20 @@ async def list_conversations(
         last_message = msg_result.scalar_one_or_none()
 
         # Get unread count for current user
-        unread_result = await db.execute(
-            select(Message).where(
-                and_(
-                    Message.conversation_id == conv.id,
-                    Message.sender_id != current_user.id,
-                    Message.status != "read"
-                )
+        unread_query = select(Message).join(
+            MessageReceipt, Message.id == MessageReceipt.message_id
+        ).where(
+            and_(
+                Message.conversation_id == conv.id,
+                Message.sender_id != current_user.id,
+                MessageReceipt.user_id == current_user.id,
+                MessageReceipt.status != ReceiptStatus.READ
             )
         )
+        if settings and settings.cleared_at:
+            unread_query = unread_query.where(Message.created_at > settings.cleared_at)
+
+        unread_result = await db.execute(unread_query)
         unread_count = len(unread_result.scalars().all())
 
         # Get participant roles
@@ -87,6 +109,15 @@ async def list_conversations(
                 )
             )
 
+        settings_response = None
+        if settings:
+            settings_response = ConversationUserSettingsResponse(
+                is_pinned=settings.is_pinned,
+                is_archived=settings.is_archived,
+                muted_until=settings.muted_until,
+                cleared_at=settings.cleared_at,
+            )
+
         response.append(
             ConversationListItem(
                 id=conv.id,
@@ -95,7 +126,9 @@ async def list_conversations(
                 last_message_preview=last_message.content[:50] if last_message else None,
                 last_message_timestamp=last_message.created_at if last_message else None,
                 unread_count=unread_count,
+                disappearing_messages_seconds=conv.disappearing_messages_seconds,
                 participants=participants,
+                settings=settings_response,
             )
         )
 
@@ -159,6 +192,20 @@ async def get_conversation(
     )
     last_message = msg_result.scalar_one_or_none()
 
+    # Get unread count for current user
+    unread_query = select(Message).join(
+        MessageReceipt, Message.id == MessageReceipt.message_id
+    ).where(
+        and_(
+            Message.conversation_id == conversation_id,
+            Message.sender_id != current_user.id,
+            MessageReceipt.user_id == current_user.id,
+            MessageReceipt.status != ReceiptStatus.READ
+        )
+    )
+    unread_result = await db.execute(unread_query)
+    unread_count = len(unread_result.scalars().all())
+
     return ConversationResponse(
         id=conversation.id,
         type=conversation.type,
@@ -168,7 +215,7 @@ async def get_conversation(
         participants=participants,
         last_message_preview=last_message.content[:50] if last_message else None,
         last_message_timestamp=last_message.created_at if last_message else None,
-        unread_count=0,  # TODO: Implement unread tracking
+        unread_count=unread_count,
     )
 
 
@@ -295,8 +342,25 @@ async def delete_conversation(
             detail="Not a member of this conversation",
         )
 
-    await db.delete(conversation)
+    # Soft delete: remove user from conversation participants
+    await db.execute(
+        conversation_participants.delete().where(
+            and_(
+                conversation_participants.c.conversation_id == conversation_id,
+                conversation_participants.c.user_id == current_user.id
+            )
+        )
+    )
     await db.commit()
+
+    # Broadcast settings updated so frontend can remove it
+    ws_payload = {
+        "type": "settings_updated",
+        "conversation_id": conversation_id,
+        "user_id": current_user.id,
+        "action": "deleted"
+    }
+    await manager.send_personal_message(ws_payload, current_user.id)
 
     return {"detail": "Conversation deleted successfully"}
 
@@ -537,3 +601,109 @@ async def update_disappearing_timer(
         await manager.send_personal_message(ws_payload, p.id)
 
     return response
+
+
+@router.post("/{conversation_id}/settings", response_model=ConversationUserSettingsResponse)
+async def update_conversation_settings(
+    conversation_id: int,
+    request: ConversationSettingsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update user-specific settings (pin, archive, mute) for a conversation"""
+    # Verify membership
+    membership_query = select(conversation_participants).where(
+        and_(
+            conversation_participants.c.conversation_id == conversation_id,
+            conversation_participants.c.user_id == current_user.id
+        )
+    )
+    membership_result = await db.execute(membership_query)
+    if not membership_result.first():
+        raise HTTPException(status_code=403, detail="Not a member of this conversation")
+
+    # Get or create settings
+    settings_query = select(ConversationUserSettings).where(
+        and_(
+            ConversationUserSettings.conversation_id == conversation_id,
+            ConversationUserSettings.user_id == current_user.id
+        )
+    )
+    result = await db.execute(settings_query)
+    settings = result.scalar_one_or_none()
+
+    if not settings:
+        settings = ConversationUserSettings(
+            user_id=current_user.id,
+            conversation_id=conversation_id
+        )
+        db.add(settings)
+
+    if request.is_pinned is not None:
+        settings.is_pinned = request.is_pinned
+    if request.is_archived is not None:
+        settings.is_archived = request.is_archived
+    if request.muted_until is not None:
+        settings.muted_until = request.muted_until
+
+    await db.commit()
+    await db.refresh(settings)
+
+    # Broadcast settings updated event to the user's other sessions
+    ws_payload = {
+        "type": "settings_updated",
+        "conversation_id": conversation_id,
+        "user_id": current_user.id
+    }
+    await manager.send_personal_message(ws_payload, current_user.id)
+
+    return settings
+
+
+@router.post("/{conversation_id}/clear-history")
+async def clear_chat_history(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Clear chat history for current user by setting cleared_at"""
+    # Verify membership
+    membership_query = select(conversation_participants).where(
+        and_(
+            conversation_participants.c.conversation_id == conversation_id,
+            conversation_participants.c.user_id == current_user.id
+        )
+    )
+    membership_result = await db.execute(membership_query)
+    if not membership_result.first():
+        raise HTTPException(status_code=403, detail="Not a member of this conversation")
+
+    settings_query = select(ConversationUserSettings).where(
+        and_(
+            ConversationUserSettings.conversation_id == conversation_id,
+            ConversationUserSettings.user_id == current_user.id
+        )
+    )
+    result = await db.execute(settings_query)
+    settings = result.scalar_one_or_none()
+
+    if not settings:
+        settings = ConversationUserSettings(
+            user_id=current_user.id,
+            conversation_id=conversation_id
+        )
+        db.add(settings)
+
+    settings.cleared_at = datetime.utcnow()
+    await db.commit()
+
+    # Broadcast settings updated
+    ws_payload = {
+        "type": "settings_updated",
+        "conversation_id": conversation_id,
+        "user_id": current_user.id,
+        "action": "history_cleared"
+    }
+    await manager.send_personal_message(ws_payload, current_user.id)
+
+    return {"message": "Chat history cleared"}

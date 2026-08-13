@@ -8,7 +8,7 @@ import ChatArea from '@/components/ChatArea';
 import NewChatModal from '@/components/NewChatModal';
 import ProfileSettingsModal from '@/components/ProfileSettingsModal';
 import { wsManager } from '@/lib/websocket';
-import { MessageCircle, Phone, Aperture, Settings as SettingsIcon } from 'lucide-react';
+import { MessageCircle, Phone, Aperture, Settings as SettingsIcon, Menu, Edit, MoreHorizontal, Filter, Link2Off } from 'lucide-react';
 
 export interface Participant {
   id: number;
@@ -19,6 +19,13 @@ export interface Participant {
   role?: 'admin' | 'member';
 }
 
+export interface ConversationSettings {
+  is_pinned?: boolean;
+  is_archived?: boolean;
+  muted_until?: string | null;
+  cleared_at?: string | null;
+}
+
 export interface Conversation {
   id: number;
   type: string;
@@ -27,6 +34,7 @@ export interface Conversation {
   last_message_timestamp?: string;
   unread_count: number;
   disappearing_messages_seconds?: number;
+  settings?: ConversationSettings;
   participants: Participant[];
 }
 
@@ -38,6 +46,7 @@ export default function ConversationsPage() {
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isNavExpanded, setIsNavExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState<'chats' | 'calls' | 'stories'>('chats');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const selectedConversationIdRef = useRef<number | null>(null);
@@ -120,11 +129,18 @@ export default function ConversationsPage() {
             message.type === 'delivery_receipt' ||
             message.type === 'settings_updated'
           ) {
-             // For these less critical events, we can just refetch in the background or ignore.
-             // Usually, delivery_receipt doesn't affect the sidebar. user_status updates online status, 
-             // but refetching on every user status change is too heavy. Let's only refetch for settings_updated.
              if (message.type === 'settings_updated') {
-               fetchConversations();
+               // If conversation is deleted or history cleared, refetch or remove
+               if (message.action === 'deleted') {
+                 setConversations((prev) => prev.filter(c => c.id !== message.conversation_id));
+                 if (selectedConversationIdRef.current === message.conversation_id) {
+                   setSelectedConversationId(null);
+                 }
+               } else {
+                 // Refetch conversations to get the updated settings (or just update the local one)
+                 // A full refetch is safest for all setting changes like pinning/unpinning, clearing history
+                 fetchConversations();
+               }
              }
           }
         });
@@ -157,6 +173,19 @@ export default function ConversationsPage() {
     }
   }, []);
 
+  const toggleFullScreenAndNav = () => {
+    setIsNavExpanded(!isNavExpanded);
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.warn('Error attempting to enable fullscreen:', err);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
   const filteredConversations = conversations.filter(conv => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -174,10 +203,20 @@ export default function ConversationsPage() {
     <div className="flex w-full h-full bg-white dark:bg-gray-900 shadow-2xl rounded-xl overflow-hidden m-0 md:m-4 md:border border-gray-200/60 dark:border-gray-800 backdrop-blur-sm transition-colors">
       
       {/* Left Navigation Rail (Desktop) */}
-      <div className="hidden md:flex w-14 bg-gray-50 dark:bg-[#1E1E1E] border-r border-gray-200 dark:border-gray-800 flex-col items-center py-4 justify-between z-20 transition-colors">
+      <div className={`${isNavExpanded ? 'hidden md:flex' : 'hidden'} w-14 bg-gray-50 dark:bg-[#1E1E1E] border-r border-gray-200 dark:border-gray-800 flex-col items-center pb-4 justify-between z-20 transition-colors`}>
         <div className="flex flex-col gap-3 w-full items-center">
+          <div className="h-14 flex items-center justify-center w-full shrink-0">
+            <button 
+              onClick={toggleFullScreenAndNav}
+              className="p-2 text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 rounded-xl transition-all" 
+              title="Toggle Full Screen & Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+          
           <button 
-            onClick={() => setActiveTab('chats')}
+            onClick={() => { setActiveTab('chats'); setIsProfileModalOpen(false); }}
             className={`p-2.5 rounded-xl transition-all ${activeTab === 'chats' ? 'bg-gray-200 dark:bg-gray-800 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'}`}
             title="Chats"
           >
@@ -185,7 +224,7 @@ export default function ConversationsPage() {
           </button>
           
           <button 
-            onClick={() => setActiveTab('calls')}
+            onClick={() => { setActiveTab('calls'); setIsProfileModalOpen(false); }}
             className={`p-2.5 rounded-xl transition-all ${activeTab === 'calls' ? 'bg-gray-200 dark:bg-gray-800 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'}`}
             title="Calls"
           >
@@ -193,7 +232,7 @@ export default function ConversationsPage() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('stories')}
+            onClick={() => { setActiveTab('stories'); setIsProfileModalOpen(false); }}
             className={`p-2.5 rounded-xl transition-all ${activeTab === 'stories' ? 'bg-gray-200 dark:bg-gray-800 text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'}`}
             title="Stories"
           >
@@ -204,45 +243,48 @@ export default function ConversationsPage() {
         <div className="flex flex-col gap-3 w-full items-center">
           <button 
             onClick={() => setIsProfileModalOpen(true)}
-            className="p-2.5 text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 rounded-xl transition-all"
+            className="p-2 text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 rounded-xl transition-all"
             title="Settings"
           >
-            <SettingsIcon className="w-[22px] h-[22px]" />
-          </button>
-          <button 
-            onClick={() => setIsProfileModalOpen(true)}
-            className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shadow-sm hover:shadow-md transition-all overflow-hidden border-2 border-transparent hover:border-blue-400"
-          >
-            {user?.avatar_url ? (
-              <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              user?.display_name?.charAt(0).toUpperCase() || 'U'
-            )}
+            <SettingsIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       <div className={`w-full md:w-[280px] lg:w-[320px] flex-shrink-0 border-r border-gray-100 dark:border-gray-800 flex flex-col bg-white dark:bg-[#1E1E1E] ${selectedConversationId || activeTab !== 'chats' ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-3 h-14 bg-white dark:bg-[#1E1E1E] flex items-center justify-between shrink-0 transition-colors">
-          <div className="flex items-center gap-3">
-            <h2 className="text-[20px] font-bold text-gray-900 dark:text-white tracking-tight">Chats</h2>
+        {/* Header */}
+        <div className="h-14 px-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 shrink-0">
+          <div className="flex items-center gap-2">
+            {!isNavExpanded && (
+              <button 
+                onClick={toggleFullScreenAndNav}
+                className="p-2 -ml-2 text-gray-500 hover:bg-gray-200/50 dark:hover:bg-gray-800/50 rounded-xl transition-all" 
+                title="Restore Nav"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white capitalize">{activeTab}</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             <button 
               onClick={() => setIsNewChatModalOpen(true)}
-              className="p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
+              <Edit className="w-4 h-4" />
+            </button>
+            <button 
+              className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Search Bar */}
         <div className="px-3 pb-2 bg-white dark:bg-[#1E1E1E] transition-colors">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="relative flex items-center bg-gray-100 dark:bg-[#2C2C2E] rounded-lg">
+            <div className="pl-3 flex items-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -253,10 +295,15 @@ export default function ConversationsPage() {
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-9 pr-3 py-1.5 border border-transparent dark:border-transparent rounded-lg leading-5 bg-gray-100 dark:bg-[#2C2C2E] text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:bg-white dark:focus:bg-[#2C2C2E] focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors"
+              className="block w-full pl-2 pr-2 py-1.5 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none sm:text-sm transition-colors"
             />
+            <button className="pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <Filter className="w-4 h-4" />
+            </button>
           </div>
         </div>
+
+        {/* Unlinked Banner Removed */}
         
         <NewChatModal 
           isOpen={isNewChatModalOpen}
@@ -311,12 +358,22 @@ export default function ConversationsPage() {
             onBack={() => setSelectedConversationId(null)}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-gray-50/30 dark:bg-gray-950">
-            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-900 rounded-full flex items-center justify-center mb-6">
-              <MessageCircle className="h-10 w-10 text-gray-400 dark:text-gray-600" />
+          <div className="flex-1 flex flex-col items-center justify-center bg-[#f0f2f5] dark:bg-gray-950">
+            <div className="flex items-center justify-center mb-6">
+              <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Outer dashed path */}
+                <path d="M60 15C35 15 15 35 15 60C15 70 19 79 26 86L15 105l21-6c7 4 15 7 24 7C85 106 105 85 105 60C105 35 85 15 60 15Z" 
+                      stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="7 6" strokeLinecap="round" />
+                
+                {/* Inner filled path (scaled down) */}
+                <path d="M60 23C42 23 27 36 27 55C27 63 30 70 35 75L27 91l16-4.5C48 89 54 90 60 90C78 90 93 77 93 55C93 33 78 23 60 23Z" 
+                      fill="#3b82f6" />
+              </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Signal Clone</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Select a conversation to start messaging</p>
+            <h3 className="text-xl font-medium text-gray-900 dark:text-gray-200 mb-2">Welcome to Signal</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              See <span className="text-blue-500 hover:underline cursor-pointer">what's new</span> in this update
+            </p>
           </div>
         )}
       </div>

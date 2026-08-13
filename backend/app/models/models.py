@@ -176,3 +176,36 @@ class MessageReaction(Base):
 
     def __repr__(self):
         return f"<MessageReaction {self.emoji} by user {self.user_id}>"
+
+
+class ConversationUserSettings(Base):
+    __tablename__ = "conversation_user_settings"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), primary_key=True)
+    is_pinned = Column(Boolean, default=False, nullable=False)
+    is_archived = Column(Boolean, default=False, nullable=False)
+    muted_until = Column(DateTime, nullable=True)
+    cleared_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("ix_conv_user_settings", "user_id", "conversation_id"),
+    )
+
+    def __repr__(self):
+        return f"<ConversationUserSettings user={self.user_id} conv={self.conversation_id}>"
+
+
+class BlockedUser(Base):
+    __tablename__ = "blocked_users"
+
+    blocker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    blocked_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("ix_blocked_users", "blocker_id", "blocked_id"),
+    )
+
+    def __repr__(self):
+        return f"<BlockedUser blocker={self.blocker_id} blocked={self.blocked_id}>"

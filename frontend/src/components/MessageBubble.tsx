@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useCallback } from 'react';
+import { Check, CheckCheck } from 'lucide-react';
 import AttachmentView from './AttachmentView';
 import ReactionPicker from './ReactionPicker';
 
@@ -15,6 +16,11 @@ interface Reaction {
   id: number;
   emoji: string;
   user_id: number;
+}
+
+interface MessageReceipt {
+  user_id: number;
+  status: string;
 }
 
 interface ReplyPreview {
@@ -38,6 +44,7 @@ interface Message {
   reply_to?: ReplyPreview | null;
   attachments?: Attachment[];
   reactions?: Reaction[];
+  receipts?: MessageReceipt[];
 }
 
 interface MessageBubbleProps {
@@ -104,6 +111,21 @@ export default function MessageBubble({
   const hasText = message.content && message.content.trim().length > 0;
   const hasAttachments = (message.attachments || []).length > 0;
   const hasReactions = Object.keys(reactionGroups).length > 0;
+
+  let aggregateStatus = 'sent';
+  if (isCurrentUser) {
+    if (message.status === 'read') {
+      aggregateStatus = 'read';
+    } else if (message.receipts && message.receipts.length > 0) {
+      const anyRead = message.receipts.some(r => r.status.toLowerCase() === 'read');
+      const anyDelivered = message.receipts.some(r => r.status.toLowerCase() === 'delivered');
+      
+      if (anyRead) aggregateStatus = 'read';
+      else if (anyDelivered) aggregateStatus = 'delivered';
+    } else {
+      aggregateStatus = message.status;
+    }
+  }
 
   return (
     <div
@@ -219,17 +241,19 @@ export default function MessageBubble({
               <span className="text-[10px] font-medium">{formatTime(message.created_at)}</span>
               {isCurrentUser && (
                 <span className="ml-0.5">
-                  {message.status === 'read' ? (
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7m-9 5l4 4L22 5" />
+                  {aggregateStatus === 'read' ? (
+                    <svg className="w-4 h-4 text-[#38bdf8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L7 17l-5-5" />
+                      <path d="M22 10l-7.5 7.5L13 16" />
                     </svg>
-                  ) : message.status === 'delivered' ? (
-                    <svg className="w-3.5 h-3.5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7m-9 5l4 4L22 5" />
+                  ) : aggregateStatus === 'delivered' ? (
+                    <svg className="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L7 17l-5-5" />
+                      <path d="M22 10l-7.5 7.5L13 16" />
                     </svg>
                   ) : (
-                    <svg className="w-3.5 h-3.5 text-blue-200/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    <svg className="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L7 17l-5-5" />
                     </svg>
                   )}
                 </span>

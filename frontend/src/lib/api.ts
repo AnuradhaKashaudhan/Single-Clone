@@ -244,6 +244,61 @@ class ApiClient {
     if (!response.ok) throw new Error(`Remove reaction failed: ${response.status}`);
     return await response.json();
   }
+
+  async deleteConversation(id: number) {
+    const res = await fetch(`${API_URL}/conversations/${id}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to delete conversation');
+    return res.json();
+  }
+
+  async markMessagesUnread(conversationId: number) {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/messages/mark-unread`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to mark as unread');
+    return res.json();
+  }
+
+  async updateConversationSettings(conversationId: number, settings: any) {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/settings`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(settings),
+    });
+    if (!res.ok) throw new Error('Failed to update settings');
+    return res.json();
+  }
+
+  async clearChatHistory(conversationId: number) {
+    const res = await fetch(`${API_URL}/conversations/${conversationId}/clear-history`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to clear history');
+    return res.json();
+  }
+
+  async blockUser(userId: number) {
+    const res = await fetch(`${API_URL}/users/${userId}/block`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to block user');
+    return res.json();
+  }
+
+  async unblockUser(userId: number) {
+    const res = await fetch(`${API_URL}/users/${userId}/block`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to unblock user');
+    return res.json();
+  }
 }
 
 export const apiClient = new ApiClient();

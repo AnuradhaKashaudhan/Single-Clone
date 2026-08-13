@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
 from app.database.database import get_db
-from app.models.models import User
+from app.models.models import User, BlockedUser
 from app.schemas.user import UserResponse, UserUpdate
 from app.routers.auth import get_current_user
 
@@ -68,3 +68,49 @@ async def update_current_user(
         last_seen=current_user.last_seen,
         created_at=current_user.created_at,
     )
+
+@router.post("/{user_id}/block")
+async def block_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Block a user"""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+    
+    # Check if already blocked
+    query = select(BlockedUser).where(
+        BlockedUser.blocker_id == current_user.id,
+        BlockedUser.blocked_id == user_id
+    )
+    result = await db.execute(query)
+    if result.first():
+        return {"detail": "User is already blocked"}
+    
+    blocked = BlockedUser(blocker_id=current_user.id, blocked_id=user_id)
+    db.add(blocked)
+    await db.commit()
+    return {"detail": "User blocked successfully"}
+
+
+@router.delete("/{user_id}/block")
+async def unblock_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Unblock a user"""
+    query = select(BlockedUser).where(
+        BlockedUser.blocker_id == current_user.id,
+        BlockedUser.blocked_id == user_id
+    )
+    result = await db.execute(query)
+    blocked = result.scalar_one_or_none()
+    
+    if not blocked:
+        return {"detail": "User is not blocked"}
+    
+    await db.delete(blocked)
+    await db.commit()
+    return {"detail": "User unblocked successfully"}

@@ -71,9 +71,28 @@ export default function ConversationList({
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
+  const visibleConversations = conversations
+    .filter(c => !c.settings?.is_archived)
+    .sort((a, b) => {
+      const aPinned = a.settings?.is_pinned ? 1 : 0;
+      const bPinned = b.settings?.is_pinned ? 1 : 0;
+      if (aPinned !== bPinned) {
+        return bPinned - aPinned;
+      }
+      return 0; // maintain default updated_at sort from backend
+    });
+
+  if (visibleConversations.length === 0 && conversations.length > 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-gray-400">
+        <p>All conversations are archived.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto">
-      {conversations.map((conv) => (
+      {visibleConversations.map((conv) => (
         <div
           key={conv.id}
           onClick={() => onSelect(conv.id)}
@@ -98,9 +117,21 @@ export default function ConversationList({
               <h3 className="text-[14px] font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {getConversationName(conv)}
               </h3>
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap ml-2">
-                {formatTime(conv.last_message_timestamp)}
-              </span>
+              <div className="flex items-center gap-1 ml-2">
+                {conv.settings?.is_pinned && (
+                  <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                  </svg>
+                )}
+                {conv.settings?.muted_until && new Date(conv.settings.muted_until) > new Date() && (
+                  <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                )}
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap ml-1">
+                  {formatTime(conv.last_message_timestamp)}
+                </span>
+              </div>
             </div>
             
             <div className="flex justify-between items-center">

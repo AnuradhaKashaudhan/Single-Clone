@@ -16,6 +16,16 @@ class ConversationParticipantResponse(BaseModel):
         orm_mode = True
 
 
+class ConversationUserSettingsResponse(BaseModel):
+    is_pinned: bool = False
+    is_archived: bool = False
+    muted_until: Optional[datetime] = None
+    cleared_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+
+
 class ConversationBase(BaseModel):
     type: ConversationType
     name: Optional[str] = None
@@ -38,6 +48,7 @@ class ConversationResponse(ConversationBase):
     last_message_timestamp: Optional[datetime] = None
     unread_count: int = 0
     disappearing_messages_seconds: Optional[int] = None
+    settings: Optional[ConversationUserSettingsResponse] = None
 
     class Config:
         orm_mode = True
@@ -51,6 +62,7 @@ class ConversationListItem(BaseModel):
     last_message_timestamp: Optional[datetime]
     unread_count: int
     disappearing_messages_seconds: Optional[int]
+    settings: Optional[ConversationUserSettingsResponse] = None
     participants: List[ConversationParticipantResponse]
 
     class Config:
@@ -68,3 +80,10 @@ class RemoveParticipantRequest(BaseModel):
 
 class UpdateDisappearingTimerRequest(BaseModel):
     disappearing_messages_seconds: Optional[int] = None
+
+class ConversationSettingsUpdate(BaseModel):
+    is_pinned: Optional[bool] = None
+    is_archived: Optional[bool] = None
+    muted_until: Optional[datetime] = None
+    # For clearing history, we won't use this model. We'll use a separate endpoint or just pass it here.
+    # Let's handle cleared_at separately via a clear-history endpoint.

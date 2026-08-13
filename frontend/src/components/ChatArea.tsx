@@ -7,6 +7,9 @@ import GroupInfoModal from '@/components/GroupInfoModal';
 import { Conversation } from '@/app/conversations/page';
 import { wsManager } from '@/lib/websocket';
 import { toast } from 'react-hot-toast';
+import ChatHeaderMenu from '@/components/ChatHeaderMenu';
+import ProfileInfoModal from '@/components/ProfileInfoModal';
+import ChatSettingsPanel from '@/components/ChatSettingsPanel';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -65,6 +68,8 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [showProfileInfo, setShowProfileInfo] = useState(false);
+  const [showChatSettings, setShowChatSettings] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map());
 
   // Reply state
@@ -92,7 +97,7 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation.id]);
 
   const markUnreadAsRead = useCallback(async (msgs: Message[]) => {
@@ -218,7 +223,7 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation.id, currentUserId]);
 
   useEffect(() => {
@@ -449,16 +454,17 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
           </div>
         </div>
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-          <button className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-colors">
+          <button className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-colors focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
             </svg>
           </button>
-          <button className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-            </svg>
-          </button>
+          <ChatHeaderMenu
+            conversation={conversation}
+            currentUserId={currentUserId}
+            onShowGroupInfo={() => setShowGroupInfo(true)}
+            onOpenSettings={() => setShowChatSettings(true)}
+          />
         </div>
       </div>
 
@@ -487,9 +493,38 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-500 dark:text-gray-400 text-xs font-medium px-4 py-2 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700/50">
-              This is the beginning of your chat history.
+          <div className="flex flex-col items-center justify-center pt-16 pb-8">
+            <div 
+              className="w-20 h-20 rounded-full bg-[#E8F0FE] dark:bg-blue-900/30 flex items-center justify-center mb-3 cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => setShowProfileInfo(true)}
+            >
+              {conversation.type === 'group' ? (
+                <span className="text-3xl text-blue-600 dark:text-blue-400 font-medium">G</span>
+              ) : (
+                <span className="text-3xl text-blue-600 dark:text-blue-400 font-medium">
+                  {conversation.name?.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div 
+              className="flex items-center gap-1 cursor-pointer hover:bg-gray-200/50 dark:hover:bg-gray-800/50 px-3 py-1 rounded-full transition-colors mb-2"
+              onClick={() => setShowChatSettings(true)}
+            >
+              <span className="text-[17px] font-medium text-gray-900 dark:text-white">
+                {conversation.name}
+              </span>
+              <span className="text-gray-500 text-sm">{'>'}</span>
+            </div>
+            
+            <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-sm mb-12">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span>No groups in common</span>
+            </div>
+
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Today
             </div>
           </div>
         ) : (
@@ -655,7 +690,21 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
         onClose={() => setShowGroupInfo(false)}
         conversation={conversation}
         currentUserId={currentUserId}
-        onUpdate={() => {}}
+        onUpdate={() => { }}
+      />
+      
+      <ProfileInfoModal
+        isOpen={showProfileInfo}
+        onClose={() => setShowProfileInfo(false)}
+        conversation={conversation}
+        currentUserId={currentUserId}
+      />
+      
+      <ChatSettingsPanel
+        isOpen={showChatSettings}
+        onClose={() => setShowChatSettings(false)}
+        conversation={conversation}
+        currentUserId={currentUserId}
       />
     </div>
   );
