@@ -117,24 +117,31 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Test Credentials */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-600 font-semibold mb-2">
-            TEST CREDENTIALS
-          </p>
-          <div className="space-y-2 text-xs text-gray-600">
-            <p>
-              <span className="font-medium">Username:</span> alice_smith
-            </p>
-            <p>
-              <span className="font-medium">Password:</span> password123
-            </p>
+        {/* Test Credentials for Recruiter */}
+        <div className="mt-8 p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <div className="flex items-center gap-2 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider">Demo Accounts (For Reviewer)</h3>
           </div>
-          <div className="mt-4 text-xs text-gray-600">
-            <p>
-              <span className="font-medium">Other users:</span> bob_jones,
-              carol_white, david_brown, emma_davis (same password)
-            </p>
+          <p className="text-xs text-blue-800 dark:text-blue-400 mb-3">
+            Click any user below to auto-fill the login form:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {['alice_smith', 'bob_jones', 'carol_white', 'david_brown'].map(username => (
+              <button
+                key={username}
+                type="button"
+                onClick={() => setFormData({ username, password: 'password123' })}
+                className="text-xs py-1.5 px-2 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors truncate text-left"
+              >
+                {username}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 text-xs text-blue-800 dark:text-blue-400">
+            <span className="font-semibold">Password for all:</span> <code className="bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">password123</code>
           </div>
         </div>
 
