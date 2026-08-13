@@ -57,7 +57,8 @@ export default function ChatHeaderMenu({ conversation, currentUserId, onShowGrou
           toast.success(isPinned ? 'Conversation pinned' : 'Conversation unpinned');
           break;
         }
-        case 'archive': {
+        case 'archive':
+        case 'unarchive': {
           const isArchived = !conversation.settings?.is_archived;
           await apiClient.updateConversationSettings(conversation.id, { is_archived: isArchived });
           toast.success(isArchived ? 'Conversation archived' : 'Conversation unarchived');
@@ -128,6 +129,7 @@ export default function ChatHeaderMenu({ conversation, currentUserId, onShowGrou
   const isArchived = conversation.settings?.is_archived;
   const isMuted = !!conversation.settings?.muted_until;
   const [showMuteSubmenu, setShowMuteSubmenu] = useState(false);
+  const [showDisappearingSubmenu, setShowDisappearingSubmenu] = useState(false);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -142,10 +144,30 @@ export default function ChatHeaderMenu({ conversation, currentUserId, onShowGrou
 
       {open && (
         <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#2C2C2C] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1.5 text-gray-800 dark:text-gray-200">
-          <MenuItem 
-            label="Disappearing messages" 
-            rightIcon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>} 
-          />
+          <div 
+            className="relative"
+            onMouseEnter={() => setShowDisappearingSubmenu(true)}
+            onMouseLeave={() => setShowDisappearingSubmenu(false)}
+          >
+            <MenuItem 
+              label="Disappearing messages" 
+              rightIcon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>} 
+            />
+            
+            {showDisappearingSubmenu && (
+              <div className="absolute top-0 right-full mr-1 w-48 bg-white dark:bg-[#2C2C2C] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1.5 z-50">
+                <MenuItem label="✓ Off" />
+                <MenuItem label="4 weeks" />
+                <MenuItem label="1 week" />
+                <MenuItem label="1 day" />
+                <MenuItem label="8 hours" />
+                <MenuItem label="1 hour" />
+                <MenuItem label="5 minutes" />
+                <MenuItem label="30 seconds" />
+                <MenuItem label="Custom time..." />
+              </div>
+            )}
+          </div>
           
           <div 
             className="relative"

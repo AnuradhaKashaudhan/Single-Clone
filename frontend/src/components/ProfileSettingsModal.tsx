@@ -198,7 +198,7 @@ export default function ProfileSettingsModal({
       // ── GENERAL ─────────────────────────────────────────────────────────────
       case 'general':
         return (
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-2xl mx-auto">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">General</h3>
             
             <div className="space-y-6">
@@ -268,7 +268,7 @@ export default function ProfileSettingsModal({
       // ── APPEARANCE ──────────────────────────────────────────────────────────
       case 'appearance':
         return (
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-2xl mx-auto">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">Appearance</h3>
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -326,7 +326,7 @@ export default function ProfileSettingsModal({
       // ── CHATS ───────────────────────────────────────────────────────────────
       case 'chats':
         return (
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-2xl mx-auto">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">Chats</h3>
             
             <div className="space-y-8">
@@ -428,7 +428,7 @@ export default function ProfileSettingsModal({
       // ── CALLS ───────────────────────────────────────────────────────────────
       case 'calls':
         return (
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-2xl mx-auto">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6 text-center">Calls</h3>
             
             <div className="space-y-8">

@@ -406,7 +406,7 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
       return <img src={other.avatar_url} alt="avatar" className="w-10 h-10 rounded-full object-cover shadow-sm" />;
     }
     return (
-      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 font-semibold shadow-sm">
+      <div className="w-10 h-10 rounded-full bg-[#E8F0FE] dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold shadow-sm">
         {other ? other.display_name.charAt(0).toUpperCase() : '?'}
       </div>
     );
@@ -437,7 +437,13 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
           )}
           <div
             className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 -ml-2 rounded-lg transition-colors"
-            onClick={() => setShowGroupInfo(true)}
+            onClick={() => {
+              if (conversation.type === 'group') {
+                setShowGroupInfo(true);
+              } else {
+                setShowChatSettings(true);
+              }
+            }}
           >
             {getConversationAvatar()}
             <div>
@@ -445,6 +451,14 @@ export default function ChatArea({ conversation, currentUserId, onMessageSent, o
                 {getConversationName()}
                 {conversation.type === 'group' && (
                   <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">Group</span>
+                )}
+                {conversation.type === 'direct' && (
+                  <div className="text-gray-400 dark:text-gray-500 ml-1" title="In contacts">
+                    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
                 )}
               </h2>
               <p className={`text-xs ${getStatusText() === 'Online' ? 'text-green-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>

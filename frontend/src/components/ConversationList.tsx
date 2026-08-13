@@ -5,8 +5,12 @@ interface ConversationListProps {
   conversations: Conversation[];
   selectedId: number | null;
   onSelect: (id: number) => void;
-  loading: boolean;
+  loading?: boolean;
   currentUserId?: number;
+  searchQuery?: string;
+  filterUnread?: boolean;
+  onClearFilter?: () => void;
+  showArchived?: boolean;
 }
 
 export default function ConversationList({
@@ -15,19 +19,46 @@ export default function ConversationList({
   onSelect,
   loading,
   currentUserId,
+  searchQuery = '',
+  filterUnread = false,
+  onClearFilter,
+  showArchived = false,
 }: ConversationListProps) {
   if (loading && conversations.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (conversations.length === 0) {
+  const filteredConversations = conversations.filter(conv => {
+    if (filterUnread && conv.unread_count === 0) return false;
+    if (searchQuery) {
+      const name = conv.type === 'group' ? conv.name : conv.participants.find(p => p.id !== currentUserId)?.display_name;
+      if (name && !name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  if (filteredConversations.length === 0) {
+    if (filterUnread) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-10">
+          <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-6">Filtered by unread</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">No unread chats</p>
+          <button 
+            onClick={onClearFilter} 
+            className="text-gray-900 dark:text-gray-100 font-semibold hover:underline text-sm"
+          >
+            Clear filter
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-gray-400">
-        <p>No conversations yet.</p>
+        <p>No conversations found.</p>
       </div>
     );
   }
@@ -54,7 +85,7 @@ export default function ConversationList({
     }
     
     return (
-      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 font-semibold text-lg shadow-sm">
+      <div className="w-10 h-10 rounded-full bg-[#E8F0FE] dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold text-lg shadow-sm">
         {initial}
       </div>
     );
@@ -71,8 +102,8 @@ export default function ConversationList({
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
-  const visibleConversations = conversations
-    .filter(c => !c.settings?.is_archived)
+  const visibleConversations = filteredConversations
+    .filter(c => showArchived ? c.settings?.is_archived : !c.settings?.is_archived)
     .sort((a, b) => {
       const aPinned = a.settings?.is_pinned ? 1 : 0;
       const bPinned = b.settings?.is_pinned ? 1 : 0;
@@ -83,6 +114,13 @@ export default function ConversationList({
     });
 
   if (visibleConversations.length === 0 && conversations.length > 0) {
+    if (showArchived) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-gray-400">
+          <p>No archived conversations.</p>
+        </div>
+      );
+    }
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-gray-500 dark:text-gray-400">
         <p>All conversations are archived.</p>
@@ -98,7 +136,7 @@ export default function ConversationList({
           onClick={() => onSelect(conv.id)}
           className={`flex items-center p-2.5 mx-1.5 my-0.5 cursor-pointer transition-colors duration-150 rounded-lg ${
             selectedId === conv.id 
-              ? 'bg-[#E5E7EB] dark:bg-[#2A2A2A]' 
+              ? 'bg-[#E3EAF2] dark:bg-[#2A3441]' 
               : 'hover:bg-[#F3F4F6] dark:hover:bg-[#2A2A2A]/60'
           }`}
         >
