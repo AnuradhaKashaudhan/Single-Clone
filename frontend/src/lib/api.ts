@@ -92,7 +92,7 @@ class ApiClient {
     password: string;
     avatar_url?: string;
   }) {
-    return this.request('/auth/register', 'POST', payload);
+    return this.request<any>('/auth/register', 'POST', payload);
   }
 
   async login(payload: {
@@ -100,7 +100,7 @@ class ApiClient {
     phone_number?: string;
     password: string;
   }) {
-    return this.request('/auth/login', 'POST', payload);
+    return this.request<any>('/auth/login', 'POST', payload);
   }
 
   async logout() {
@@ -109,14 +109,18 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    return this.request('/auth/me', 'GET');
+    return this.request<any>('/auth/me', 'GET');
+  }
+
+  async updateProfile(payload: { display_name?: string; avatar_url?: string; status?: string }) {
+    return this.request<any>('/users/me', 'PUT', payload);
   }
 
   // User endpoints
   async searchUsers(query: string) {
     const params = new URLSearchParams();
     params.append('q', query);
-    return this.request(`/users/search?${params.toString()}`, 'GET');
+    return this.request<any>(`/users/search?${params.toString()}`, 'GET');
   }
 
   // Conversation endpoints
@@ -125,14 +129,14 @@ class ApiClient {
     if (skip !== undefined) params.append('skip', skip.toString());
     if (limit !== undefined) params.append('limit', limit.toString());
     const queryString = params.toString();
-    return this.request(
+    return this.request<any>(
       `/conversations${queryString ? '?' + queryString : ''}`,
       'GET'
     );
   }
 
   async getConversation(conversationId: number) {
-    return this.request(`/conversations/${conversationId}`, 'GET');
+    return this.request<any>(`/conversations/${conversationId}`, 'GET');
   }
 
   async createConversation(payload: {
@@ -140,7 +144,15 @@ class ApiClient {
     name?: string;
     participant_ids: number[];
   }) {
-    return this.request('/conversations', 'POST', payload);
+    return this.request<any>('/conversations', 'POST', payload);
+  }
+
+  async addMember(conversationId: number, userId: number) {
+    return this.request<any>(`/conversations/${conversationId}/members`, 'POST', { user_id: userId });
+  }
+
+  async removeMember(conversationId: number, userId: number) {
+    return this.request<any>(`/conversations/${conversationId}/members/${userId}`, 'DELETE');
   }
 
   // Message endpoints
@@ -149,7 +161,7 @@ class ApiClient {
     if (skip !== undefined) params.append('skip', skip.toString());
     if (limit !== undefined) params.append('limit', limit.toString());
     const queryString = params.toString();
-    return this.request(
+    return this.request<any>(
       `/conversations/${conversationId}/messages${
         queryString ? '?' + queryString : ''
       }`,
@@ -161,7 +173,7 @@ class ApiClient {
     conversationId: number,
     payload: { content: string }
   ) {
-    return this.request(
+    return this.request<any>(
       `/conversations/${conversationId}/messages`,
       'POST',
       payload
@@ -169,7 +181,7 @@ class ApiClient {
   }
 
   async markMessagesAsRead(conversationId: number, messageIds: number[]) {
-    return this.request(
+    return this.request<any>(
       `/conversations/${conversationId}/messages/mark-as-read`,
       'POST',
       { message_ids: messageIds }

@@ -50,11 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (token) {
         apiClient.setToken(token);
         try {
-          const userData = await apiClient.getCurrentUser();
+          const userData: any = await apiClient.getCurrentUser();
           setUser(userData);
           setError(null);
-        } catch (err) {
-          console.error('Failed to fetch current user:', err);
+        } catch (err: any) {
+          if (err?.message?.includes('Invalid token') || err?.message?.includes('401')) {
+            console.warn('Session expired or invalid token');
+          } else {
+            console.error('Failed to fetch current user:', err);
+          }
           localStorage.removeItem('access_token');
           apiClient.setToken(null);
           setError('Session expired');
@@ -77,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (response.access_token) {
         apiClient.setToken(response.access_token);
-        const userData = await apiClient.getCurrentUser();
+        const userData: any = await apiClient.getCurrentUser();
         setUser(userData);
       } else {
         throw new Error('No token received');

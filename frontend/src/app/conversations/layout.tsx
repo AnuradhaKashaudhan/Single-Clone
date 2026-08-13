@@ -10,7 +10,7 @@ export default function ConversationsLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden font-sans text-gray-900 dark:text-gray-100 transition-colors">
         {children}
       </div>
     </ProtectedRoute>

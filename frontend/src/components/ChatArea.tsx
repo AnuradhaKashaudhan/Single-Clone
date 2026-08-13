@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '@/lib/api';
 import MessageBubble from '@/components/MessageBubble';
 import TypingIndicator from '@/components/TypingIndicator';
+import GroupInfoModal from '@/components/GroupInfoModal';
 import { Conversation } from '@/app/conversations/page';
 import { wsManager } from '@/lib/websocket';
 
@@ -9,16 +10,19 @@ interface ChatAreaProps {
   conversation: Conversation;
   currentUserId?: number;
   onMessageSent: () => void;
+  onBack?: () => void;
 }
 
 export default function ChatArea({
   conversation,
   currentUserId,
   onMessageSent,
+  onBack,
 }: ChatAreaProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRefs = useRef<Map<number, NodeJS.Timeout>>(new Map());
@@ -65,7 +69,7 @@ export default function ChatArea({
     setLoading(true);
     fetchMessages();
     
-    const unsubscribe = wsManager.subscribe((msg) => {
+    const unsubscribe = wsManager.subscribe((msg: any) => {
       if (msg.type === 'message' && msg.message.conversation_id === conversation.id) {
         setMessages(prev => [...prev, msg.message]);
         
@@ -133,7 +137,7 @@ export default function ChatArea({
     setNewMessage('');
 
     try {
-      await apiClient.sendMessage(conversation.id, content);
+      await apiClient.sendMessage(conversation.id, { content });
       await fetchMessages();
       onMessageSent(); // Update conversation list (e.g. last message preview)
     } catch (error) {
@@ -175,25 +179,50 @@ export default function ChatArea({
   return (
     <div className="flex-1 flex flex-col h-full bg-[#f0f2f5] relative">
       {/* Header */}
-      <div className="h-16 px-4 bg-white border-b border-gray-200 flex items-center justify-between z-10 shadow-sm shrink-0">
+      <div 
+        className="h-16 px-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10 shadow-sm shrink-0 transition-colors"
+      >
         <div className="flex items-center gap-3">
-          {getConversationAvatar()}
-          <div>
-            <h2 className="text-[16px] font-semibold text-gray-900 leading-tight">
-              {getConversationName()}
-            </h2>
-            <p className={`text-xs ${getStatusText() === 'Online' ? 'text-green-500 font-medium' : 'text-gray-500'}`}>
-              {getStatusText()}
-            </p>
+          {onBack && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onBack(); }}
+              className="md:hidden mr-1 p-2 -ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-2 -ml-2 rounded-lg transition-colors"
+            onClick={() => {
+              if (conversation.type === 'group') {
+                setShowGroupInfo(true);
+              }
+            }}
+          >
+            {getConversationAvatar()}
+            <div>
+              <h2 className="text-[16px] font-semibold text-gray-900 dark:text-white leading-tight flex items-center gap-2">
+                {getConversationName()}
+                {conversation.type === 'group' && (
+                  <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">Group</span>
+                )}
+              </h2>
+              <p className={`text-xs ${getStatusText() === 'Online' ? 'text-green-500 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                {getStatusText()}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-gray-500">
-          <button className="hover:bg-gray-100 p-2 rounded-full transition-colors">
+        <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
+          <button className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
             </svg>
           </button>
-          <button className="hover:bg-gray-100 p-2 rounded-full transition-colors">
+          <button className="hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
             </svg>
@@ -203,16 +232,16 @@ export default function ChatArea({
 
       {/* Messages Area */}
       <div 
-        className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#efeae2]"
+        className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#efeae2] dark:bg-gray-950 transition-colors"
         style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")', backgroundSize: '150px', backgroundBlendMode: 'multiply' }}
       >
         {loading && messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
-            <div className="bg-indigo-100 text-indigo-800 text-sm font-medium px-4 py-2 rounded-full mb-4 shadow-sm">
+            <div className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200 text-sm font-medium px-4 py-2 rounded-full mb-4 shadow-sm">
               This is the beginning of your chat history.
             </div>
           </div>
@@ -244,20 +273,20 @@ export default function ChatArea({
       </div>
 
       {/* Input Area */}
-      <div className="p-3 bg-gray-50 border-t border-gray-200 shrink-0">
+      <div className="p-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shrink-0 transition-colors">
         <form onSubmit={handleSendMessage} className="flex items-end gap-2 max-w-4xl mx-auto">
-          <button type="button" className="p-2.5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 rounded-full transition-colors flex-shrink-0">
+          <button type="button" className="p-2.5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 rounded-full transition-colors flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
-          <button type="button" className="p-2.5 text-gray-500 hover:bg-gray-200 hover:text-gray-700 rounded-full transition-colors flex-shrink-0">
+          <button type="button" className="p-2.5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 rounded-full transition-colors flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
           </button>
           
-          <div className="flex-1 bg-white border border-gray-300 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm">
+          <div className="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all shadow-sm">
             <textarea
               value={newMessage}
               onChange={(e) => {
@@ -272,7 +301,7 @@ export default function ChatArea({
                 }
               }}
               placeholder="Type a message"
-              className="w-full max-h-32 p-3 bg-transparent border-none focus:ring-0 resize-none outline-none text-[15px] leading-relaxed"
+              className="w-full max-h-32 p-3 bg-transparent border-none focus:ring-0 resize-none outline-none text-[15px] leading-relaxed text-gray-900 dark:text-white"
               rows={1}
               style={{ minHeight: '44px' }}
             />
@@ -281,7 +310,7 @@ export default function ChatArea({
           <button 
             type="submit" 
             disabled={!newMessage.trim()}
-            className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white rounded-full transition-colors flex-shrink-0 shadow-sm"
+            className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-full transition-colors flex-shrink-0 shadow-sm"
           >
             {newMessage.trim() ? (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 translate-x-0.5" viewBox="0 0 20 20" fill="currentColor">
@@ -295,6 +324,17 @@ export default function ChatArea({
           </button>
         </form>
       </div>
+
+      <GroupInfoModal 
+        isOpen={showGroupInfo} 
+        onClose={() => setShowGroupInfo(false)} 
+        conversation={conversation}
+        currentUserId={currentUserId}
+        onUpdate={() => {
+          // You could trigger a re-fetch of the conversation details here
+          // This will be handled globally via WebSocket or polling later
+        }}
+      />
     </div>
   );
 }

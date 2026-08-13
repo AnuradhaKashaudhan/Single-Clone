@@ -6,8 +6,9 @@ from datetime import datetime
 
 from app.database.database import get_db
 from app.models.models import User, Conversation, Message, MessageReceipt, ConversationType, conversation_participants
-from app.schemas import ConversationCreate, ConversationResponse, ConversationListItem, AddParticipantRequest, RemoveParticipantRequest, UserResponse
+from app.schemas import ConversationCreate, ConversationResponse, ConversationListItem, AddParticipantRequest, RemoveParticipantRequest, UserResponse, ConversationParticipantResponse
 from app.routers.auth import get_current_user
+from app.models.models import UserRole
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -54,19 +55,25 @@ async def list_conversations(
         )
         unread_count = len(unread_result.scalars().all())
 
+        # Get participant roles
+        roles_result = await db.execute(
+            select(conversation_participants.c.user_id, conversation_participants.c.role)
+            .where(conversation_participants.c.conversation_id == conv.id)
+        )
+        roles_map = {row.user_id: row.role for row in roles_result.all()}
+
         # Get participants
         participants = []
         for participant in conv.participants:
             participants.append(
-                UserResponse(
+                ConversationParticipantResponse(
                     id=participant.id,
                     username=participant.username,
                     display_name=participant.display_name,
                     phone_number=participant.phone_number,
                     avatar_url=participant.avatar_url,
                     status=participant.status,
-                    last_seen=participant.last_seen,
-                    created_at=participant.created_at,
+                    role=roles_map.get(participant.id, UserRole.MEMBER)
                 )
             )
 
@@ -112,19 +119,25 @@ async def get_conversation(
             detail="Not a member of this conversation",
         )
 
+    # Get participant roles
+    roles_result = await db.execute(
+        select(conversation_participants.c.user_id, conversation_participants.c.role)
+        .where(conversation_participants.c.conversation_id == conversation.id)
+    )
+    roles_map = {row.user_id: row.role for row in roles_result.all()}
+
     # Build response
     participants = []
     for participant in conversation.participants:
         participants.append(
-            UserResponse(
+            ConversationParticipantResponse(
                 id=participant.id,
                 username=participant.username,
                 display_name=participant.display_name,
                 phone_number=participant.phone_number,
                 avatar_url=participant.avatar_url,
                 status=participant.status,
-                last_seen=participant.last_seen,
-                created_at=participant.created_at,
+                role=roles_map.get(participant.id, UserRole.MEMBER)
             )
         )
 
@@ -203,19 +216,36 @@ async def create_conversation(
     await db.commit()
     await db.refresh(new_conversation)
 
+    if request.type == ConversationType.GROUP:
+        await db.execute(
+            conversation_participants.update().where(
+                and_(
+                    conversation_participants.c.conversation_id == new_conversation.id,
+                    conversation_participants.c.user_id == current_user.id
+                )
+            ).values(role=UserRole.ADMIN)
+        )
+        await db.commit()
+
+    # Get participant roles
+    roles_result = await db.execute(
+        select(conversation_participants.c.user_id, conversation_participants.c.role)
+        .where(conversation_participants.c.conversation_id == new_conversation.id)
+    )
+    roles_map = {row.user_id: row.role for row in roles_result.all()}
+
     # Build response
     participant_responses = []
     for p in participants:
         participant_responses.append(
-            UserResponse(
+            ConversationParticipantResponse(
                 id=p.id,
                 username=p.username,
                 display_name=p.display_name,
                 phone_number=p.phone_number,
                 avatar_url=p.avatar_url,
                 status=p.status,
-                last_seen=p.last_seen,
-                created_at=p.created_at,
+                role=roles_map.get(p.id, UserRole.MEMBER)
             )
         )
 
@@ -310,19 +340,25 @@ async def add_member(
     await db.commit()
     await db.refresh(conversation)
 
+    # Get participant roles
+    roles_result = await db.execute(
+        select(conversation_participants.c.user_id, conversation_participants.c.role)
+        .where(conversation_participants.c.conversation_id == conversation.id)
+    )
+    roles_map = {row.user_id: row.role for row in roles_result.all()}
+
     # Build response
     participant_responses = []
     for p in conversation.participants:
         participant_responses.append(
-            UserResponse(
+            ConversationParticipantResponse(
                 id=p.id,
                 username=p.username,
                 display_name=p.display_name,
                 phone_number=p.phone_number,
                 avatar_url=p.avatar_url,
                 status=p.status,
-                last_seen=p.last_seen,
-                created_at=p.created_at,
+                role=roles_map.get(p.id, UserRole.MEMBER)
             )
         )
 
@@ -362,6 +398,25 @@ async def remove_member(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not a member of this conversation",
         )
+
+    if conversation.type == ConversationType.GROUP:
+        # Check if current user is admin OR removing themselves
+        if current_user.id != user_id:
+            role_result = await db.execute(
+                select(conversation_participants.c.role)
+                .where(
+                    and_(
+                        conversation_participants.c.conversation_id == conversation_id,
+                        conversation_participants.c.user_id == current_user.id
+                    )
+                )
+            )
+            role = role_result.scalar_one_or_none()
+            if role != UserRole.ADMIN:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Only admins can remove other members",
+                )
 
     # Get member to remove
     result = await db.execute(
