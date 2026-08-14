@@ -129,7 +129,7 @@ export default function LoginPage() {
             Click any user below to auto-fill the login form:
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {['alice_smith', 'bob_jones', 'carol_white', 'david_brown'].map(username => (
+            {['teacher', 'alice_smith', 'bob_jones'].map(username => (
               <button
                 key={username}
                 type="button"
