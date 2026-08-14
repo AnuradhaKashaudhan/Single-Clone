@@ -95,7 +95,7 @@ export default function ConversationsPage() {
         
         const unsubscribe = wsManager.subscribe((message) => {
           if (message.type === 'message') {
-            const newMsg: any = message.message;
+            const newMsg = message.message as any;
             const convId = newMsg.conversation_id;
             
             setConversations(prev => {

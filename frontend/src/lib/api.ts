@@ -2,7 +2,17 @@
  * API Client - Centralized HTTP requests to backend
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://single-clone-cwty.onrender.com';
+let API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://single-clone-cwty.onrender.com';
+
+if (typeof window !== 'undefined') {
+  const hostname = window.location.hostname;
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('vercel.app')) {
+    // If we're on a local network IP but not localhost, assume backend is on port 8000
+    if (hostname.match(/^[0-9.]+$/)) {
+      API_URL = `${window.location.protocol}//${hostname}:8000`;
+    }
+  }
+}
 
 class ApiClient {
   private token: string | null = null;

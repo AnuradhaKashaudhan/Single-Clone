@@ -4,7 +4,19 @@ Run after first startup: python seed_db.py
 """
 
 import asyncio
+import sys
+import typing
 from datetime import datetime, timedelta
+
+# Patch Pydantic ForwardRef for Python 3.13 compatibility
+if sys.version_info >= (3, 13):
+    original_evaluate = typing.ForwardRef._evaluate
+    def patched_evaluate(self, globalns, localns, *args, recursive_guard=None, **kwargs):
+        if recursive_guard is None:
+            recursive_guard = set()
+        return original_evaluate(self, globalns, localns, *args, recursive_guard=recursive_guard, **kwargs)
+    typing.ForwardRef._evaluate = patched_evaluate
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.database import AsyncSessionLocal, engine, Base
 from app.models.models import (

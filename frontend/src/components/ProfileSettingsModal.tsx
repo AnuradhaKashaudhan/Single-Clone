@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { useScreenSecurity } from '@/lib/ScreenSecurityContext';
 
 interface UserProfile {
   id: number;
@@ -34,6 +35,7 @@ export default function ProfileSettingsModal({
   onProfileUpdated,
 }: ProfileSettingsModalProps) {
   const router = useRouter();
+  const { isSecurityEnabled, setIsSecurityEnabled } = useScreenSecurity();
 
   // ── Tab state ──────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -514,6 +516,28 @@ export default function ProfileSettingsModal({
         return (
           <div className="max-w-md mx-auto">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Privacy</h3>
+            
+            <div className="mb-6">
+              <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-4">App Security</h4>
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                <label className="flex items-start justify-between cursor-pointer group">
+                  <div className="flex flex-col pr-4">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Screen Security</span>
+                    <span className="text-xs text-gray-500 mt-1">Best-effort web protection. Hides chat content when app loses focus and prevents printing. Cannot prevent OS-level screenshots.</span>
+                  </div>
+                  <div className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={isSecurityEnabled}
+                      onChange={(e) => setIsSecurityEnabled(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
               <PlaceholderRow icon={<Check className="w-5 h-5 text-gray-500" />} label="Read Receipts" description="Let others know when you read their messages" />
               <PlaceholderRow icon={<MessageSquare className="w-5 h-5 text-gray-500" />} label="Typing Indicators" description="Let others see when you are typing" />

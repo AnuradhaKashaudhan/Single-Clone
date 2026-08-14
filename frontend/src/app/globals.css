@@ -25,3 +25,31 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Screen Security Feature */
+body.screen-security-active > *:not(.toaster) {
+  filter: blur(15px) grayscale(100%);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.3;
+}
+
+body.screen-security-active::after {
+  content: "Privacy Mode Active";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  font-weight: bold;
+  color: #555;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Print Protection */
+@media print {
+  body.screen-security-enabled {
+    display: none !important;
+  }
+}

@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "Secure messaging app clone",
 };
 
+import { ScreenSecurityProvider } from "@/lib/ScreenSecurityContext";
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -26,7 +28,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ScreenSecurityProvider>
+            {children}
+          </ScreenSecurityProvider>
+        </AuthProvider>
         <Toaster position="top-right" toastOptions={{ className: 'dark:bg-gray-800 dark:text-white' }} />
       </body>
     </html>

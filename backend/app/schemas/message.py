@@ -11,7 +11,7 @@ class MessageReceiptResponse(BaseModel):
     timestamp: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class AttachmentResponse(BaseModel):
@@ -23,7 +23,7 @@ class AttachmentResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class ReactionResponse(BaseModel):
@@ -33,7 +33,7 @@ class ReactionResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class ReactionCreate(BaseModel):
@@ -48,7 +48,7 @@ class ReplyPreview(BaseModel):
     message_type: MessageType = MessageType.TEXT
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class MessageBase(BaseModel):
@@ -79,7 +79,7 @@ class MessageResponse(MessageBase):
     reactions: List[ReactionResponse] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class MessageStatusUpdate(BaseModel):

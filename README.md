@@ -16,8 +16,8 @@ This is a full-stack, real-time secure messaging platform inspired by Signal. It
 - **Pixel-Perfect UI Clone**: An exact, dynamic replication of the native Signal Desktop interface including an interactive left rail, custom tooltips, message archiving, and disappearing messages settings.
 - **Dark Mode**: Beautiful, responsive, toggle-able dark and light themes spanning all UI components.
 - **Reviewer-Friendly**: The login page features a "Demo Accounts" card that auto-fills credentials with a single click for seamless testing.
+- **Screen Security**: Best-effort web screenshot protection that hides chat content when the app loses focus and prevents printing.
 - **SQLite Persistence**: No mocked data. All users, conversations, messages, and receipts are safely persisted in SQLite.
-
 ## Tech Stack
 
 **Frontend**:
