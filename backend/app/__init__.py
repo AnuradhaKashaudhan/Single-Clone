@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.database.database import init_db
+from app.database.seed import seed_test_users
 
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 
@@ -12,7 +13,8 @@ UPLOADS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads"
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
-    print("Database initialized")
+    await seed_test_users()
+    print("Database initialized and seeded")
     # Ensure uploads directory exists
     os.makedirs(UPLOADS_DIR, exist_ok=True)
     yield
