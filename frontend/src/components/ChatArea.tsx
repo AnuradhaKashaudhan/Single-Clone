@@ -50,6 +50,7 @@ interface Message {
   created_at: string;
   attachments?: Attachment[];
   reactions?: Reaction[];
+  expires_at?: string | null;
 }
 
 // ── Props ────────────────────────────────────────────────────────────────────

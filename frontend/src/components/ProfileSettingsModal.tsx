@@ -25,7 +25,7 @@ interface ProfileSettingsModalProps {
   onProfileUpdated: (user: UserProfile) => void;
 }
 
-type Tab = 'profile' | 'general' | 'appearance' | 'chats' | 'calls' | 'notifications' | 'privacy' | 'data';
+type Tab = 'profile' | 'general' | 'appearance' | 'chats' | 'calls' | 'notifications' | 'privacy' | 'data' | 'backups' | 'donate';
 
 export default function ProfileSettingsModal({
   isOpen,
