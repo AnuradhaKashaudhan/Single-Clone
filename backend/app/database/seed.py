@@ -34,6 +34,27 @@ async def seed_test_users():
             "phone_number": "+10000000003",
             "password": "password123",
             "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob",
+        },
+        {
+            "username": "carol_white",
+            "display_name": "Carol White",
+            "phone_number": "+10000000004",
+            "password": "password123",
+            "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Carol",
+        },
+        {
+            "username": "david_brown",
+            "display_name": "David Brown",
+            "phone_number": "+10000000005",
+            "password": "password123",
+            "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
+        },
+        {
+            "username": "emma_davis",
+            "display_name": "Emma Davis",
+            "phone_number": "+10000000006",
+            "password": "password123",
+            "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma",
         }
     ]
 

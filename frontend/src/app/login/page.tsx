@@ -128,11 +128,14 @@ export default function LoginPage() {
           <p className="text-sm text-indigo-800 mb-4">
             Click any account below to instantly auto-fill the login form:
           </p>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
             {[
               { label: "Evaluator", username: "teacher", password: "password123" },
-              { label: "Test User 1", username: "alice_smith", password: "password123" },
-              { label: "Test User 2", username: "bob_jones", password: "password123" }
+              { label: "Alice Smith", username: "alice_smith", password: "password123" },
+              { label: "Bob Jones", username: "bob_jones", password: "password123" },
+              { label: "Carol White", username: "carol_white", password: "password123" },
+              { label: "David Brown", username: "david_brown", password: "password123" },
+              { label: "Emma Davis", username: "emma_davis", password: "password123" }
             ].map(user => (
               <button
                 key={user.username}
