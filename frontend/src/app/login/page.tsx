@@ -118,30 +118,40 @@ export default function LoginPage() {
         </form>
 
         {/* Test Credentials for Recruiter */}
-        <div className="mt-8 p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        <div className="mt-8 p-5 bg-indigo-50 border-2 border-indigo-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider">Demo Accounts (For Reviewer)</h3>
+            <h3 className="text-md font-bold text-indigo-900 uppercase tracking-wider">Tester Accounts</h3>
           </div>
-          <p className="text-xs text-blue-800 dark:text-blue-400 mb-3">
-            Click any user below to auto-fill the login form:
+          <p className="text-sm text-indigo-800 mb-4">
+            Click any account below to instantly auto-fill the login form:
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            {['teacher', 'alice_smith', 'bob_jones'].map(username => (
+          <div className="space-y-3">
+            {[
+              { label: "Evaluator", username: "teacher", password: "password123" },
+              { label: "Test User 1", username: "alice_smith", password: "password123" },
+              { label: "Test User 2", username: "bob_jones", password: "password123" }
+            ].map(user => (
               <button
-                key={username}
+                key={user.username}
                 type="button"
-                onClick={() => setFormData({ username, password: 'password123' })}
-                className="text-xs py-1.5 px-2 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors truncate text-left"
+                onClick={() => setFormData({ username: user.username, password: user.password })}
+                className="w-full flex items-center justify-between p-3 bg-white border border-indigo-100 rounded-lg shadow-sm hover:shadow-md hover:border-indigo-300 transition-all text-left group"
               >
-                {username}
+                <div>
+                  <div className="text-xs font-bold text-gray-500 uppercase">{user.label}</div>
+                  <div className="text-indigo-700 font-medium">Username: <span className="font-bold">{user.username}</span></div>
+                  <div className="text-gray-600 text-sm">Password: {user.password}</div>
+                </div>
+                <div className="bg-indigo-100 text-indigo-600 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
               </button>
             ))}
-          </div>
-          <div className="mt-3 text-xs text-blue-800 dark:text-blue-400">
-            <span className="font-semibold">Password for all:</span> <code className="bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-800">password123</code>
           </div>
         </div>
 
