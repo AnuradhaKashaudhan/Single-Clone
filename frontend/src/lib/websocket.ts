@@ -29,7 +29,7 @@ class WebSocketManager {
   private messageQueue: any[] = [];
   
   constructor() {
-    this.url = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
+    this.url = process.env.NEXT_PUBLIC_WS_URL || 'wss://single-clone-cwty.onrender.com';
   }
 
   connect(token: string): Promise<void> {

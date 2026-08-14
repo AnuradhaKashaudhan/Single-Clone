@@ -11,7 +11,7 @@ import ChatHeaderMenu from '@/components/ChatHeaderMenu';
 import ProfileInfoModal from '@/components/ProfileInfoModal';
 import ChatSettingsPanel from '@/components/ChatSettingsPanel';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://single-clone-cwty.onrender.com';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
